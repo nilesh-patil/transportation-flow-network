@@ -1,0 +1,68 @@
+[workspace]
+name = "transportation-flow-network"
+version = "2021.0.0"
+description = "NYC yellow-taxi directed flow network over census tracts: a reproducible 2021 modernization of a 2016-17 student project."
+authors = ["Nilesh Patil"]
+channels = ["conda-forge"]
+platforms = ["osx-64"]
+
+# The package lives under src/; expose it without a build step.
+[activation.env]
+PYTHONPATH = "src"
+
+[tasks]
+download = "python -m transportation_flow_network.download"
+geo      = "python -m transportation_flow_network.geo"
+ingest   = "python -m transportation_flow_network.ingest"
+graph    = "python -m transportation_flow_network.graph"
+metrics  = "python -m transportation_flow_network.metrics"
+temporal = "python -m transportation_flow_network.temporal"
+analysis = "python -m transportation_flow_network.analysis"
+figures  = "python -m transportation_flow_network.figures"
+pipeline = { depends-on = [
+  "download", "geo", "ingest", "graph",
+  "metrics", "temporal", "analysis", "figures",
+] }
+
+[dependencies]
+# Core data engineering (out-of-core ingest of 146M rows)
+python = "3.11.*"
+duckdb = ">=0.9"
+polars = ">=0.20"
+pyarrow = ">=12"
+pandas = ">=2.0"
+numpy = ">=1.24,<2"
+scipy = ">=1.10"
+scikit-learn = ">=1.2"
+statsmodels = ">=0.14"
+
+# Geospatial
+geopandas = ">=0.13"
+shapely = ">=2.0"
+pyproj = ">=3.4"
+contextily = ">=1.3"
+
+# Graph / network science
+networkx = ">=3.1"
+python-louvain = ">=0.16"
+python-igraph = ">=0.10"
+leidenalg = ">=0.9"
+
+# Visualization
+matplotlib-base = ">=3.7"
+seaborn = ">=0.12"
+
+# Notebook
+jupyterlab = ">=4.0"
+ipykernel = ">=6.0"
+nbformat = ">=5.7"
+
+# Download / utilities
+requests = ">=2.28"
+tqdm = ">=4.64"
+
+[pypi-dependencies]
+# Optional alternative census-tract source (TIGER/Line via Census API).
+# The pipeline does NOT require this: the default tract source is the
+# in-repo NYC 2010 block shapefile dissolved up to tracts (offline, deterministic).
+pygris = ">=0.1.6"
