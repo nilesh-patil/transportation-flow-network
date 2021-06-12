@@ -19,9 +19,10 @@ metrics  = "python -m transportation_flow_network.metrics"
 temporal = "python -m transportation_flow_network.temporal"
 analysis = "python -m transportation_flow_network.analysis"
 figures  = "python -m transportation_flow_network.figures"
+summary  = "python -m transportation_flow_network.summary"
 pipeline = { depends-on = [
   "download", "geo", "ingest", "graph",
-  "metrics", "temporal", "analysis", "figures",
+  "metrics", "temporal", "analysis", "figures", "summary",
 ] }
 
 [dependencies]
