@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Findings - Transportation Flow Network</title>
+  <meta name="description" content="What 142.2 million 2015 NYC yellow-taxi trips say once you treat them as a directed weighted network: hub asymmetry, where Manhattan ends, the day/night reversal, temporal rhythms, and the JFK flat-fare band.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <!-- Typography: Newsreader (body + headings) + JetBrains Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+  <!-- Math: KaTeX via CDN, auto-rendered after load -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+        crossorigin="anonymous">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="site-title" href="index.html">Transportation Flow Network</a>
+  <nav class="site-nav">
+    <a href="index.html">Overview</a>
+    <a href="methods.html">Method</a>
+    <a href="findings.html" aria-current="page">Findings</a>
+    <a href="demo.html">Live map</a>
+    <a href="about.html">About</a>
+  </nav>
+</header>
+
+<main class="site-main">
+
+  <p class="eyebrow">Findings</p>
+  <h1>What the network says</h1>
+
+  <p class="lead">
+    Treating 142.2 million 2015 yellow-taxi trips as a directed, weighted graph turns a year of
+    pickups and drop-offs into a set of measurable claims. Below is the results table first, then
+    each headline finding with the figure and the numbers behind it. Every figure on this page is
+    regenerated from the full trip set, and every number traces back to
+    <a href="data/summary.json"><code>summary.json</code></a>.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- RESULTS AT A GLANCE                                                    -->
+  <!-- ===================================================================== -->
+  <h2>Results at a glance</h2>
+
+  <p>
+    <span class="newthought">One table, the whole study.</span> These are the numbers the rest of
+    the page unpacks. The graph is built on taxi zones rather than census tracts (the 2015 parquet
+    ships zone IDs, not coordinates), so a node is a TLC zone and an edge is the annual flow from
+    one zone to another.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Quantity</th>
+        <th class="num">Value</th>
+        <th>What it means</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Trips kept</td>
+        <td class="num">142,199,201</td>
+        <td>97.4% of raw 2015 yellow-cab trips survive cleaning</td>
+      </tr>
+      <tr>
+        <td>Self-loop trips</td>
+        <td class="num">6,460,370</td>
+        <td>4.54% start and end in the same zone</td>
+      </tr>
+      <tr>
+        <td>Nodes / edges (full)</td>
+        <td class="num">262 / 42,347</td>
+        <td>Active zones and directed OD pairs observed</td>
+      </tr>
+      <tr>
+        <td>Communities</td>
+        <td class="num">4</td>
+        <td>Leiden partition, mode of 100 seeds, z = 13.8</td>
+      </tr>
+      <tr>
+        <td>Modularity Q</td>
+        <td class="num">0.189</td>
+        <td>vs null mean &minus;0.022 (weight-concentration test)</td>
+      </tr>
+      <tr>
+        <td>Within-community trips</td>
+        <td class="num">49.8%</td>
+        <td>Half of all travel stays inside one community</td>
+      </tr>
+      <tr>
+        <td>Gravity decay &beta;</td>
+        <td class="num">1.146</td>
+        <td>Doubly-constrained model; flow falls off steeply with distance</td>
+      </tr>
+      <tr>
+        <td>Gravity fit (CPC)</td>
+        <td class="num">0.816</td>
+        <td>Common Part of Commuters between observed and predicted</td>
+      </tr>
+      <tr>
+        <td>Weighted reciprocity</td>
+        <td class="num">0.818</td>
+        <td>Most flow is matched by a return flow over the year</td>
+      </tr>
+      <tr>
+        <td>Degree assortativity</td>
+        <td class="num">&minus;0.184</td>
+        <td>Mildly disassortative: hubs lean on smaller zones</td>
+      </tr>
+      <tr>
+        <td>Backbone edges (&alpha; = 0.05)</td>
+        <td class="num">6,190</td>
+        <td>Disparity filter keeps 87.6% of trips</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    The reciprocity figure of 0.818 is an annual average. Over a full day flow looks balanced, but
+    that hides a strong within-day directional structure that the
+    <a href="#day-night">day/night reversal</a> section pulls back out.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- HUB ASYMMETRY                                                          -->
+  <!-- ===================================================================== -->
+  <h2 id="hubs">Hub asymmetry: volume is not the same as reach</h2>
+
+  <p>
+    <span class="newthought">A hub can be big in two different ways.</span> Midtown is big because
+    a handful of central Manhattan zones each pour enormous volume into it. JFK is big because it
+    pulls from almost everywhere. Plotting in- and out-degree against total trips separates the two
+    kinds of hub: the inner-city draws sit high and to the right on volume but feed from a limited
+    origin set, while the airports sit high on degree with far lower trips per source.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/06_degree_vs_trips.svg" alt="Scatter of zone in- and out-degree against total trips, separating high-volume inner-city draws from high-degree airports.">
+    <figcaption>
+      <span class="label">Figure 6.</span> In- and out-degree against total trips. Inner-city
+      draws like Penn Station and Midtown pull huge volume from a limited Manhattan origin set;
+      airports pull from many scattered origins, giving them high degree but lower trips per source.
+    </figcaption>
+  </figure>
+
+  <p>
+    The contrast is sharpest in trips per source, the in-strength of a zone divided by the number
+    of distinct origins feeding it. Midtown Center takes in about 22,900 trips per origin; JFK,
+    despite drawing from nearly every zone in the city (in-degree 249), takes in about 4,510.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Zone</th>
+        <th class="num">In-strength</th>
+        <th class="num">In-degree</th>
+        <th class="num">Trips / source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Midtown Center</td>
+        <td class="num">5,159,038</td>
+        <td class="num">225</td>
+        <td class="num">22,929</td>
+      </tr>
+      <tr>
+        <td>Times Sq / Theatre District</td>
+        <td class="num">4,348,768</td>
+        <td class="num">233</td>
+        <td class="num">18,664</td>
+      </tr>
+      <tr>
+        <td>Penn Station / Madison Sq West</td>
+        <td class="num">3,897,451</td>
+        <td class="num">224</td>
+        <td class="num">17,399</td>
+      </tr>
+      <tr>
+        <td>East Village</td>
+        <td class="num">3,535,216</td>
+        <td class="num">219</td>
+        <td class="num">16,143</td>
+      </tr>
+      <tr>
+        <td>LaGuardia Airport</td>
+        <td class="num">1,727,487</td>
+        <td class="num">237</td>
+        <td class="num">7,289</td>
+      </tr>
+      <tr>
+        <td>JFK Airport</td>
+        <td class="num">1,123,029</td>
+        <td class="num">249</td>
+        <td class="num">4,510</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    JFK has a higher in-degree than Midtown Center yet a fifth of its trips per source. The airports
+    are reach hubs; the Midtown cluster are volume hubs. A single weighted-degree number, the kind
+    the 2016 pass reported, collapses that distinction.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- WHERE MANHATTAN ENDS                                                   -->
+  <!-- ===================================================================== -->
+  <h2 id="manhattan-ends">Where Manhattan ends</h2>
+
+  <p>
+    <span class="newthought">Centrality on a map is not centrality in a network.</span> Fit a
+    doubly-constrained gravity model, which already accounts for each zone's own volume and for
+    distance, and then look at what the model gets wrong per zone. The residual, a mean deviance
+    "surprise", marks zones that are under- or over-connected given where they sit. The model
+    reaches \(\beta = 1.146\) and a Common Part of Commuters of 0.816, so the residual is the
+    interesting part: it is the structure the gravity baseline cannot explain.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/08_where_manhattan_ends.svg" alt="Choropleth of per-zone gravity-model residuals across the Manhattan core; blue under-connected zones, red over-connected zones.">
+    <figcaption>
+      <span class="label">Figure 8.</span> Per-zone mean deviance residual from the
+      doubly-constrained gravity model, scoped to the high-coverage core. Blue zones are
+      under-connected given their location, functionally peripheral despite central geography;
+      red zones around Times Square and Midtown are over-connected.
+    </figcaption>
+  </figure>
+
+  <p>
+    The under-connected zones are not the outer boroughs. They are the Upper East and Upper West
+    Sides and the East Village / Alphabet City cluster, all geographically central but residential
+    in their taxi behaviour. The over-connected zones are the Midtown and Times Square commercial
+    core. "Where Manhattan ends", functionally, runs along the edge of that commercial core, not
+    along the river.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Most under-connected (core)</th>
+        <th class="num">Surprise</th>
+        <th>Most over-connected (core)</th>
+        <th class="num">Surprise</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Upper East Side North</td>
+        <td class="num">&minus;20.28</td>
+        <td>Times Sq / Theatre District</td>
+        <td class="num">+9.40</td>
+      </tr>
+      <tr>
+        <td>Upper West Side South</td>
+        <td class="num">&minus;16.32</td>
+        <td>Midtown South</td>
+        <td class="num">+6.26</td>
+      </tr>
+      <tr>
+        <td>Upper East Side South</td>
+        <td class="num">&minus;16.13</td>
+        <td>Clinton East</td>
+        <td class="num">+5.23</td>
+      </tr>
+      <tr>
+        <td>Upper West Side North</td>
+        <td class="num">&minus;15.68</td>
+        <td>Garment District</td>
+        <td class="num">+4.63</td>
+      </tr>
+      <tr>
+        <td>Lincoln Square East</td>
+        <td class="num">&minus;12.30</td>
+        <td>Midtown East</td>
+        <td class="num">+4.10</td>
+      </tr>
+      <tr>
+        <td>East Village</td>
+        <td class="num">&minus;5.09</td>
+        <td>Midtown Center</td>
+        <td class="num">+3.78</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    A negative surprise means the model expected more taxi flow than the city actually generated.
+    The Upper East Side, perhaps the most "central" address in Manhattan, is the single most
+    under-connected zone in the core. By taxi, it behaves like a periphery.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- DAY / NIGHT REVERSAL                                                   -->
+  <!-- ===================================================================== -->
+  <h2 id="day-night">The day/night reversal</h2>
+
+  <p>
+    <span class="newthought">The annual graph is balanced; the daily graph is not.</span>
+    Weighted reciprocity over the year is 0.818, which makes most zones look like quiet two-way
+    streets. Split the day into periods and the structure reappears. Midtown and the Financial
+    District are net sinks in the morning (people arrive) and net sources in the evening (people
+    leave). The East Village and Lower East Side are the exact mirror image.
+  </p>
+
+  <figure class="figure-pair">
+    <figure>
+      <img src="assets/figures/10_day_night_reversal.svg" alt="Net-flow sign flip between morning and evening, with East Village's destination rank rising from day to night.">
+    </figure>
+    <figure>
+      <img src="assets/figures/09_net_flow_source_sink.svg" alt="Annual net-flow index per zone, mostly near balanced over a full year.">
+    </figure>
+    <figcaption>
+      <span class="label">Figures 10 and 9.</span> Left: the AM/PM net-flow sign flip. Midtown and
+      the Financial District are AM sinks and PM sources; the East Village and Lower East Side are
+      the reverse, and the East Village climbs from roughly 42nd destination by day to 1st at night.
+      Right: over a full year, the net-flow index leaves most zones near balanced, which is why the
+      reversal only shows up once you look within the day.
+    </figcaption>
+  </figure>
+
+  <p>
+    The net-flow index (out-strength minus in-strength, normalised) flips sign between the morning
+    and evening peaks for the zones that anchor the reversal:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Zone</th>
+        <th class="num">NFI, AM peak</th>
+        <th class="num">NFI, PM peak</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Midtown Center</td><td class="num">&minus;0.567</td><td class="num">+0.128</td></tr>
+      <tr><td>Times Sq / Theatre District</td><td class="num">&minus;0.358</td><td class="num">+0.014</td></tr>
+      <tr><td>Financial District North</td><td class="num">&minus;0.205</td><td class="num">+0.241</td></tr>
+      <tr><td>East Village</td><td class="num">+0.492</td><td class="num">&minus;0.168</td></tr>
+      <tr><td>Lower East Side</td><td class="num">+0.372</td><td class="num">&minus;0.209</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    The same swing shows up if you rank zones purely by how many trips arrive at night. Nightlife
+    zones that barely register as daytime destinations dominate after midnight:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Zone</th>
+        <th class="num">Daytime destination rank</th>
+        <th class="num">Night destination rank</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>East Village</td><td class="num">42</td><td class="num">1</td></tr>
+      <tr><td>Clinton East</td><td class="num">22</td><td class="num">2</td></tr>
+      <tr><td>Lower East Side</td><td class="num">51</td><td class="num">6</td></tr>
+      <tr><td>Meatpacking / West Village West</td><td class="num">41</td><td class="num">19</td></tr>
+      <tr><td>Greenwich Village North</td><td class="num">29</td><td class="num">29</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    The overlap between the AM and night top-hub sets is small (Jaccard 0.20): the city's busiest
+    zones at 8 AM are largely not its busiest at 2 AM. The original blog read the Lower East Side as
+    "suburb-like" because it looked quiet in aggregate. That was a daytime-only artefact; at night
+    it is one of the busiest destinations in the city.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- TEMPORAL RHYTHMS                                                       -->
+  <!-- ===================================================================== -->
+  <h2 id="rhythms">Temporal rhythms</h2>
+
+  <p>
+    <span class="newthought">The year has a season and the week has a shape.</span> Volume peaks in
+    spring: March is the single busiest month at 12.96 million trips, and the spring average runs
+    11.8% above the June-December average. That drop is partly weather and partly the rise of
+    ride-hailing competition through 2015, so it should not be read as pure seasonality.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/01_monthly_volume.svg" alt="Monthly trip counts across 2015, peaking in spring and declining through the second half of the year.">
+    <figcaption>
+      <span class="label">Figure 1.</span> Monthly trip counts. Volume peaks in spring (March-May,
+      highlighted) and runs 11.8% lower across June-December. The decline is confounded by
+      ride-hailing growth through 2015, not just weather.
+    </figcaption>
+  </figure>
+
+  <p>
+    Within the week, two bright bands dominate the hour-by-weekday density: the weekday commute and
+    the weekend late night. Weekday 6-9 AM trips are 12.6% of all volume; weekend 0-4 AM trips are
+    5.9%. The single busiest cell is Friday around 7 PM, the overlap of the commute home and the
+    start of the weekend.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/03_hour_weekday_heatmap.svg" alt="Heatmap of trip density by hour of day and day of week, with bright weekday-commute and weekend-late-night bands.">
+    <figcaption>
+      <span class="label">Figure 3.</span> Hour by weekday density. Bright bands at the weekday
+      6-9 AM and evening commute and at the weekend 0-4 AM hours reproduce the original heatmap
+      finding, now on the full year.
+    </figcaption>
+  </figure>
+
+  <p>
+    Zones do not all share one rhythm. Clustering each zone's 24-hour weekday pickup curve separates
+    three clean types: commuter-residential zones that peak in the morning, the commercial core that
+    peaks in the evening, and a nightlife group (Lower East Side, the Williamsburgs, Park Slope)
+    whose pickups peak near 11 PM.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/15_daily_rhythms.svg" alt="K-means clusters of zones by their 24-hour weekday pickup shape, separating morning, evening, and late-night peaks.">
+    <figcaption>
+      <span class="label">Figure 15.</span> K-means clusters of each zone's 24-hour weekday pickup
+      shape. Commuter-residential (morning peak, hour 8), commercial core (evening peak, hour 21)
+      and nightlife (late-night peak near hour 23; Lower East Side, Williamsburg) separate cleanly.
+    </figcaption>
+  </figure>
+
+  <!-- ===================================================================== -->
+  <!-- JFK FLAT-FARE BAND                                                     -->
+  <!-- ===================================================================== -->
+  <h2 id="flat-fare">The $52 band is a fare rule, not a rounding artefact</h2>
+
+  <p>
+    <span class="newthought">A flat line on the fare-versus-duration plot has an explanation.</span>
+    Plot fare against trip duration and a horizontal band appears at about $52, independent of how
+    long the trip took. The original write-up guessed this was rounded tips. It is not. It is the
+    JFK flat fare (RatecodeID 2): a fixed $52 between Manhattan and JFK regardless of time in traffic.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/04_cost_vs_duration.svg" alt="Scatter of fare against trip duration showing a flat band at about $52 independent of duration.">
+    <figcaption>
+      <span class="label">Figure 4.</span> Fare versus duration. The flat band at about $52,
+      independent of duration, is the JFK flat fare (RatecodeID 2). This explains the
+      "constant-cost outliers" the original guessed were rounded tips.
+    </figcaption>
+  </figure>
+
+  <p>
+    In a 300,000-trip sample, the JFK flat fare is exactly $52 (median $52, interquartile range
+    $52-$52) and accounts for 2.03% of trips. The full $49-53 constant-cost band is 2.19% of trips,
+    and 92.7% of that band is JFK flat-fare travel. The flatness is a tariff, not a measurement
+    quirk.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- DIVERGENCES                                                            -->
+  <!-- ===================================================================== -->
+  <h2 id="divergences">Divergences from the original blog</h2>
+
+  <p>
+    <span class="newthought">The modernization changed some headline numbers.</span> The 2016-17
+    project worked at census-tract resolution on a smaller, differently cleaned slice. The 2015
+    parquet ships taxi-zone IDs rather than coordinates, so the rebuilt graph is zone-based. That
+    changes the node count and several figures, and it also corrects two claims outright.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Quantity</th>
+        <th class="num">Original blog</th>
+        <th class="num">This rebuild</th>
+        <th>Why it changed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Spatial unit</td>
+        <td class="num">~580 tracts</td>
+        <td class="num">262 zones</td>
+        <td>2015 parquet has zone IDs, not lat/long</td>
+      </tr>
+      <tr>
+        <td>Top edges shown</td>
+        <td class="num">1,275</td>
+        <td class="num">600</td>
+        <td>Different threshold on a coarser node set</td>
+      </tr>
+      <tr>
+        <td>"Constant-cost outliers"</td>
+        <td class="num">rounded tips</td>
+        <td class="num">JFK flat fare</td>
+        <td>$52 RatecodeID 2, 92.7% of the band</td>
+      </tr>
+      <tr>
+        <td>Lower East Side</td>
+        <td class="num">"suburb-like"</td>
+        <td class="num">night #6 destination</td>
+        <td>Aggregate hid a strong day/night swing</td>
+      </tr>
+      <tr>
+        <td>Degree treatment</td>
+        <td class="num">single degree</td>
+        <td class="num">directed in / out</td>
+        <td>Splitting degree exposes hub asymmetry</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Two caveats carry through all of this. Yellow taxis over-sample Manhattan and the airports, so
+    the outer boroughs are thin in this data and the gravity residuals are scoped to the
+    high-coverage core. And because the rebuild works on taxi zones rather than tracts, the spatial
+    resolution is coarser than the original. The
+    <a href="methods.html">method page</a> documents both, and the
+    <a href="demo.html">live map</a> lets you read the per-zone numbers directly.
+  </p>
+
+</main>
+
+<footer class="site-footer">
+  <p>
+    Originally a 2016-17 student project on NYC taxi transportation networks; rebuilt as a reproducible pipeline in the 2021 modernization.
+    Source on <a href="https://github.com/nilesh-patil/transportation-flow-network">GitHub</a>.
+    Set with Newsreader; figures regenerated from 142.2M trips.
+  </p>
+</footer>
+
+<!-- Math: KaTeX auto-render, deferred so it never blocks first paint. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+        integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+        crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
+        crossorigin="anonymous"
+        onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+</body>
+</html>

@@ -1,0 +1,821 @@
+/* ============================================================================
+   Transportation Flow Network — Tufte editorial stylesheet
+   A figure-centric technical essay on 142.2M NYC yellow-taxi trips as a directed,
+   weighted flow network. Paper background, single 720px measure, 960px figure
+   breakout, restrained tables, KaTeX for math.
+
+   Adapted from the "K-Means, four ways" companion-site design system. Keeps the
+   paper / ink / faint / rule / accent tokens, Newsreader + JetBrains Mono, the
+   .site-header / .site-nav / .site-main / .epigraph contract, sidenotes, and the
+   responsive breakpoint. Adds a diverging map scale (blue under .. red over) for
+   the gravity-residual choropleths and a categorical palette for the four
+   communities.
+   ============================================================================ */
+
+/* --- Design tokens (authoritative) --------------------------------------- */
+:root {
+  /* Palette */
+  --paper:      #fffff8;   /* Tufte off-white background           */
+  --ink:        #151515;   /* body text                            */
+  --ink-faint:  #595959;   /* captions, sidenotes, metadata        */
+  --rule:       #dcdcd4;   /* hairlines, table rules               */
+  --accent:     #a32015;   /* links, emphasis — dark red, sparing  */
+
+  /* Diverging map scale: gravity residual (under-connected .. over-connected).
+     Blue = fewer trips than the model predicts, red = more. Five-step ColorBrewer
+     RdBu, mid is the neutral paper-ish grey. */
+  --map-under-3: #2c7fb8;  /* strongly under-connected (cool, saturated) */
+  --map-under-2: #67a9cf;
+  --map-under-1: #d1e5f0;
+  --map-mid:     #f7f7f0;  /* on-model, near zero surprise               */
+  --map-over-1:  #fddbc7;
+  --map-over-2:  #ef8a62;
+  --map-over-3:  #b2182b;  /* strongly over-connected (warm, saturated)  */
+
+  /* Categorical community palette (4 detected communities + spare).
+     Muted, print-friendly, distinct in the off-white field. */
+  --comm-1: #4477aa;   /* steel blue   */
+  --comm-2: #cc8844;   /* amber        */
+  --comm-3: #117755;   /* pine green   */
+  --comm-4: #882255;   /* mulberry     */
+  --comm-5: #777777;   /* unassigned / small */
+
+  /* Flow / network glyph helpers */
+  --node:       #151515;
+  --edge:       rgba(21, 21, 21, 0.28);
+  --net-source: #2c7fb8;   /* net source of trips */
+  --net-sink:   #b2182b;   /* net sink of trips   */
+
+  /* Type */
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --measure:      720px;   /* reading column   */
+  --measure-wide: 960px;   /* figure breakout  */
+  --line:         1.55;    /* generous body leading */
+
+  /* Spacing */
+  --gap-xs:  0.4rem;
+  --gap-sm:  0.8rem;
+  --gap:     1.4rem;
+  --gap-lg:  2.6rem;
+  --gap-xl:  4.5rem;
+}
+
+/* --- Reset & base -------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: var(--line);
+  color: var(--ink);
+  background: var(--paper);
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  font-feature-settings: "kern", "liga", "onum";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, canvas, svg, iframe { max-width: 100%; }
+img { height: auto; display: block; }
+
+/* --- The measure: header, main, footer all share one centered column ----- */
+.site-header,
+.site-footer,
+.site-main > * {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.site-main {
+  padding-top: var(--gap-lg);
+  padding-bottom: var(--gap-xl);
+}
+
+/* --- Header: small-caps title left, quiet nav right, hairline rule -------- */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem 1.4rem;
+  padding-top: 1.4rem;
+  padding-bottom: 1rem;
+  margin-bottom: var(--gap-lg);
+  border-bottom: 1px solid var(--rule);
+}
+
+.site-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 0.92rem;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-decoration: none;
+  border: 0;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.1rem;
+  margin-left: auto;
+  font-size: 0.82rem;
+}
+
+.site-nav a {
+  color: var(--ink-faint);
+  text-decoration: none;
+  border: 0;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+}
+.site-nav a:hover { color: var(--accent); }
+/* mark the current page in the nav */
+.site-nav a[aria-current="page"] {
+  color: var(--ink);
+  border-bottom: 1px solid var(--accent);
+}
+
+/* --- Footer: quiet metadata line ----------------------------------------- */
+.site-footer {
+  margin-top: var(--gap-xl);
+  padding-top: 1.2rem;
+  padding-bottom: 2.4rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+.site-footer p { margin: 0; }
+
+/* --- Headings ------------------------------------------------------------ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  color: var(--ink);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 2.3rem;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--gap);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: var(--gap-xl) 0 var(--gap-sm);
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-style: italic;
+  font-weight: 400;
+  margin: var(--gap-lg) 0 var(--gap-sm);
+}
+
+h4, h5, h6 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin: var(--gap) 0 var(--gap-xs);
+}
+
+/* --- Prose --------------------------------------------------------------- */
+p { margin: 0 0 var(--gap); }
+
+p.lead {
+  font-size: 1.18rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: var(--gap-lg);
+}
+
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(163, 32, 21, 0.32);
+  transition: border-color 120ms ease, color 120ms ease;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+/* --- newthought: small-caps run-in opener -------------------------------- */
+.newthought {
+  font-variant: small-caps;
+  font-style: normal;
+  letter-spacing: 0.03em;
+  font-size: 1.08em;
+}
+
+/* --- Epigraph: opening summary block ------------------------------------- */
+.epigraph {
+  margin: 0 auto var(--gap-lg);
+  font-style: italic;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+.epigraph p { margin: 0 0 var(--gap-sm); }
+.epigraph footer,
+.epigraph cite {
+  display: block;
+  font-style: normal;
+  font-size: 0.82rem;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+blockquote {
+  margin: var(--gap) 0;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--rule);
+  color: var(--ink-faint);
+  font-style: italic;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+/* --- Code ---------------------------------------------------------------- */
+code, pre, kbd, samp {
+  font-family: var(--mono);
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+}
+
+code {
+  font-size: 0.85em;
+  background: rgba(21, 21, 21, 0.045);
+  padding: 0.08em 0.34em;
+  border-radius: 2px;
+}
+
+pre {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  background: rgba(21, 21, 21, 0.045);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem 1.1rem;
+  margin: var(--gap) 0;
+  overflow-x: auto;
+}
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* --- Lists --------------------------------------------------------------- */
+ul, ol {
+  margin: 0 0 var(--gap);
+  padding-left: 1.4rem;
+}
+li { margin: 0.25rem 0; }
+
+/* A tidy "key findings" / metric list with hanging dashes */
+ul.findings {
+  list-style: none;
+  padding-left: 0;
+}
+ul.findings > li {
+  padding-left: 1.4rem;
+  position: relative;
+  margin: 0.6rem 0;
+}
+ul.findings > li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+/* --- Tables -------------------------------------------------------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--gap-lg) 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+thead th {
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+table tbody tr:last-child td {
+  border-bottom: 1px solid var(--ink);
+}
+th, td {
+  padding: 0.45rem 0.9rem 0.45rem 0;
+  text-align: left;
+  vertical-align: baseline;
+}
+th {
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* --- Horizontal rule ----------------------------------------------------- */
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: var(--gap-xl) 0;
+}
+
+/* --- Figures ------------------------------------------------------------- */
+figure {
+  margin: var(--gap-lg) 0;
+}
+figure img,
+figure canvas,
+figure iframe,
+figure svg {
+  display: block;
+  margin: 0 auto;
+}
+figcaption {
+  margin-top: var(--gap-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+figcaption .label,
+figcaption b,
+figcaption strong {
+  font-style: normal;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Wide figures break the measure out to ~960px, centered on the viewport */
+.figure-wide {
+  width: min(var(--measure-wide), calc(100vw - 3rem));
+  max-width: none;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+.figure-wide img,
+.figure-wide iframe,
+.figure-wide svg { width: 100%; }
+
+/* Side-by-side figure pair (e.g. day vs night maps) */
+.figure-pair {
+  width: min(var(--measure-wide), calc(100vw - 3rem));
+  max-width: none;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem 1.6rem;
+}
+.figure-pair figure { margin: 0; }
+.figure-pair figure img,
+.figure-pair figure svg { width: 100%; }
+@media (max-width: 760px) {
+  .figure-pair { grid-template-columns: 1fr; }
+}
+
+iframe {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+/* --- Map / community legends --------------------------------------------- */
+/* A horizontal swatch legend used under choropleths and the community map.
+   Markup: <ul class="legend"><li><span class="swatch" style="--c:..."></span>label</li>… */
+.legend {
+  list-style: none;
+  padding: 0;
+  margin: var(--gap-sm) 0 var(--gap);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+.legend .swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 1px solid rgba(21, 21, 21, 0.2);
+  background: var(--c, var(--rule));
+  flex: none;
+}
+
+/* A continuous diverging gradient bar for the gravity-residual scale */
+.legend-gradient {
+  margin: var(--gap-sm) 0 var(--gap);
+  max-width: 22rem;
+}
+.legend-gradient .bar {
+  height: 0.7rem;
+  border: 1px solid rgba(21, 21, 21, 0.2);
+  background: linear-gradient(
+    to right,
+    var(--map-under-3),
+    var(--map-under-1),
+    var(--map-mid),
+    var(--map-over-1),
+    var(--map-over-3)
+  );
+}
+.legend-gradient .ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin-top: 0.2rem;
+}
+
+/* Community colour helpers (inline text + swatches) */
+.comm-1 { color: var(--comm-1); }
+.comm-2 { color: var(--comm-2); }
+.comm-3 { color: var(--comm-3); }
+.comm-4 { color: var(--comm-4); }
+.comm-5 { color: var(--comm-5); }
+
+/* Eyebrow (small-caps kicker above a heading) */
+.eyebrow {
+  display: block;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-bottom: var(--gap-xs);
+}
+
+/* --- Stat row: a few headline numbers under the lead --------------------- */
+.statrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-lg);
+  margin: var(--gap-lg) 0;
+  padding: var(--gap) 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.statrow .stat {
+  flex: 1 1 8rem;
+}
+.statrow .stat .value {
+  display: block;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ink);
+}
+.statrow .stat .label {
+  display: block;
+  font-size: 0.74rem;
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  margin-top: 0.2rem;
+}
+
+/* --- Sidenotes (Tufte numbered-margin pattern) --------------------------- */
+.sidenote-toggle {
+  display: inline;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+  border: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.sidenote-state {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+.sidenote {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 1279.98px) {
+  .sidenote {
+    display: none;
+    margin: var(--gap-sm) 0;
+    padding-left: 1rem;
+    border-left: 2px solid var(--rule);
+  }
+  .sidenote-state:checked + .sidenote { display: block; }
+}
+
+@media (min-width: 1280px) {
+  .site-main > * { position: relative; }
+  .sidenote-toggle {
+    cursor: default;
+    pointer-events: none;
+  }
+  .sidenote {
+    float: right;
+    clear: right;
+    width: 14rem;
+    margin-right: -16rem;
+    margin-top: 0.2rem;
+    margin-bottom: var(--gap-sm);
+    display: block;
+  }
+}
+
+/* ===========================================================================
+   LIVE MAP  (demo.html — Leaflet choropleth + flow lines)
+   Class & id names below are load-bearing for the demo JS. Styled quietly:
+   hairline borders, paper background, serif labels.
+   =========================================================================== */
+
+/* Wider measure so the map + controls breathe */
+.demo-grid {
+  max-width: var(--measure-wide);
+  margin-left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: var(--gap-lg);
+  align-items: start;
+  margin-top: var(--gap-lg);
+  margin-bottom: var(--gap-lg);
+}
+
+.demo-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  position: sticky;
+  top: 1rem;
+}
+
+.demo-controls label {
+  display: block;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.demo-controls label span {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.demo-controls input[type="range"] {
+  width: 100%;
+  margin-top: 0.3rem;
+  accent-color: var(--accent);
+}
+
+.demo-controls select {
+  width: 100%;
+  margin-top: 0.25rem;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.35rem 0.5rem;
+}
+.demo-controls select:hover { border-color: var(--ink-faint); }
+
+/* Radio / checkbox groups for layer + daypart toggles */
+.demo-controls fieldset {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.6rem 0.8rem;
+  margin: 0;
+}
+.demo-controls legend {
+  font-size: 0.74rem;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  padding: 0 0.3rem;
+}
+.demo-controls fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.84rem;
+  margin: 0.15rem 0;
+}
+.demo-controls fieldset input { accent-color: var(--accent); }
+
+.demo-controls button {
+  appearance: none;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink-faint);
+  border-radius: 2px;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.demo-controls button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+.demo-controls button:disabled {
+  color: var(--rule);
+  border-color: var(--rule);
+  background: var(--paper);
+  cursor: not-allowed;
+}
+
+.demo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-sm);
+}
+
+/* Visual column: the map */
+.demo-visual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  align-items: stretch;
+}
+
+.demo-map-wrap { width: 100%; }
+
+#demo-map {
+  width: 100%;
+  height: 560px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+#demo-status {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  text-align: center;
+  margin: 0.4rem 0 0;
+}
+
+/* Leaflet popups restyled to match the paper system */
+.leaflet-container {
+  font-family: var(--serif);
+  background: var(--paper);
+}
+.leaflet-popup-content-wrapper {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: 0 1px 6px rgba(21, 21, 21, 0.12);
+}
+.leaflet-popup-content {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.leaflet-popup-content .zone-name {
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+}
+.leaflet-popup-content .metric {
+  font-variant-numeric: tabular-nums;
+}
+.leaflet-popup-tip { background: var(--paper); border: 1px solid var(--rule); }
+.leaflet-bar a {
+  color: var(--ink);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+.leaflet-bar a:hover { background: rgba(21, 21, 21, 0.045); }
+
+/* The map's own legend (diverging or community), bottom-right overlay */
+.map-legend {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.map-legend .swatch {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.4rem;
+  vertical-align: -0.1rem;
+  border: 1px solid rgba(21, 21, 21, 0.2);
+}
+
+/* --- KaTeX --------------------------------------------------------------- */
+.katex { font-size: 1.02em; }
+.katex-display {
+  margin: var(--gap) 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ===========================================================================
+   ACCESSIBILITY
+   =========================================================================== */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+.sidenote-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================================================
+   RESPONSIVE  (readable down to 375px)
+   =========================================================================== */
+@media (max-width: 900px) {
+  .demo-grid {
+    max-width: 100%;
+    margin-left: 0;
+    transform: none;
+    grid-template-columns: 1fr;
+    gap: var(--gap);
+  }
+  .demo-controls { position: static; }
+  #demo-map { height: 440px; }
+}
+
+@media (max-width: 760px) {
+  html { font-size: 17px; }
+
+  .figure-wide {
+    max-width: 100%;
+    margin-left: 0;
+    transform: none;
+  }
+  .statrow { gap: var(--gap); }
+}
+
+@media (max-width: 420px) {
+  html { font-size: 16px; }
+
+  .site-header { gap: 0.4rem 0.9rem; }
+  .site-nav { font-size: 0.78rem; gap: 0.15rem 0.8rem; }
+  h1 { font-size: 1.95rem; }
+  h2 { font-size: 1.32rem; }
+
+  .site-header,
+  .site-footer,
+  .site-main > * {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .statrow .stat .value { font-size: 1.45rem; }
+}

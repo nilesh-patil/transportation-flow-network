@@ -1,0 +1,565 @@
+{
+  "graph": {
+    "total_trips": 142199201,
+    "self_loop_trips": 6460370,
+    "self_loop_share_pct": 4.543,
+    "n_nodes_total": 260,
+    "n_nodes_active": 262,
+    "n_edges_full": 42347,
+    "edge_weight_threshold": 500,
+    "n_nodes_filtered": 228,
+    "n_edges_filtered": 7945,
+    "blog_tract_nodes": 580,
+    "blog_top_edges": 1275,
+    "n_zones_geocoded": 260,
+    "n_nodes_table": 263
+  },
+  "metrics": {
+    "degree_summary": {
+      "full_in_degree_max": 249,
+      "full_out_degree_max": 260,
+      "full_mean_in_degree": 161.0,
+      "filtered_edges": 7945,
+      "filtered_nodes": 228
+    },
+    "hub_asymmetry": {
+      "penn_station": {
+        "zone": "Penn Station/Madison Sq West",
+        "in_strength": 3897451,
+        "in_degree": 224,
+        "trips_per_source": 17399.3
+      },
+      "midtown_center": {
+        "zone": "Midtown Center",
+        "in_strength": 5159038,
+        "in_degree": 225,
+        "trips_per_source": 22929.1
+      },
+      "times_sq": {
+        "zone": "Times Sq/Theatre District",
+        "in_strength": 4348768,
+        "in_degree": 233,
+        "trips_per_source": 18664.2
+      },
+      "jfk": {
+        "zone": "JFK Airport",
+        "in_strength": 1123029,
+        "in_degree": 249,
+        "trips_per_source": 4510.2
+      },
+      "laguardia": {
+        "zone": "LaGuardia Airport",
+        "in_strength": 1727487,
+        "in_degree": 237,
+        "trips_per_source": 7289.0
+      },
+      "east_village": {
+        "zone": "East Village",
+        "in_strength": 3535216,
+        "in_degree": 219,
+        "trips_per_source": 16142.5
+      },
+      "lower_east_side": {
+        "zone": "Lower East Side",
+        "in_strength": 1593653,
+        "in_degree": 206,
+        "trips_per_source": 7736.2
+      }
+    },
+    "baseline_community": {
+      "method": "python-louvain (single seed, undirected projection)",
+      "seed": 42,
+      "n_communities": 4,
+      "modularity_Q": 0.1897,
+      "n_nodes": 228,
+      "n_edges": 5255
+    },
+    "manhattan_ends_examples": [
+      {
+        "zone": "Alphabet City",
+        "trips_per_source": 4104.5,
+        "periphery_pct": 0.81
+      },
+      {
+        "zone": "Lower East Side",
+        "trips_per_source": 7736.2,
+        "periphery_pct": 0.854
+      },
+      {
+        "zone": "East Village",
+        "trips_per_source": 16142.5,
+        "periphery_pct": 0.964
+      }
+    ],
+    "manhattan_ends_most_peripheral": [
+      {
+        "zone": "Marine Park/Floyd Bennett Field",
+        "trips_per_source": 10.2
+      },
+      {
+        "zone": "Mariners Harbor",
+        "trips_per_source": 10.6
+      },
+      {
+        "zone": "Pelham Bay Park",
+        "trips_per_source": 11.2
+      },
+      {
+        "zone": "Breezy Point/Fort Tilden/Riis Beach",
+        "trips_per_source": 13.1
+      },
+      {
+        "zone": "Great Kills",
+        "trips_per_source": 15.9
+      },
+      {
+        "zone": "Saint Michaels Cemetery/Woodside",
+        "trips_per_source": 16.2
+      },
+      {
+        "zone": "Grymes Hill/Clifton",
+        "trips_per_source": 16.9
+      },
+      {
+        "zone": "New Dorp/Midland Beach",
+        "trips_per_source": 18.1
+      }
+    ]
+  },
+  "temporal": {
+    "monthly": {
+      "by_month": {
+        "Jan": 12374747,
+        "Feb": 12076079,
+        "Mar": 12960677,
+        "Apr": 12718147,
+        "May": 12820628,
+        "Jun": 12016559,
+        "Jul": 11276541,
+        "Aug": 10851281,
+        "Sep": 10941959,
+        "Oct": 11999324,
+        "Nov": 11006595,
+        "Dec": 11156664
+      },
+      "peak_month": "Mar",
+      "spring_mean": 12833150,
+      "jun_dec_mean": 11321274,
+      "spring_to_rest_drop_pct": 11.8
+    },
+    "hour_weekday": {
+      "weekday_morning_6_9_share_pct": 12.62,
+      "weekend_latenight_0_4_share_pct": 5.91,
+      "busiest_cell": {
+        "weekday": 4,
+        "hour": 19
+      }
+    },
+    "cost_duration": {
+      "sample_size": 300000,
+      "jfk_flatfare_share_pct": 2.029,
+      "jfk_fare_median": 52.0,
+      "jfk_fare_iqr": [
+        52.0,
+        52.0
+      ],
+      "constant_band_49_53_share_pct": 2.187,
+      "constant_band_is_jfk_pct": 92.7
+    }
+  },
+  "analysis": {
+    "centrality_rank_correlation": {
+      "columns": [
+        "out_strength",
+        "in_strength",
+        "pagerank",
+        "hits_hub",
+        "hits_authority",
+        "betweenness",
+        "eigenvector"
+      ],
+      "spearman": [
+        [
+          1.0,
+          0.966,
+          0.889,
+          0.989,
+          0.959,
+          0.354,
+          0.961
+        ],
+        [
+          0.966,
+          1.0,
+          0.923,
+          0.951,
+          0.998,
+          0.374,
+          0.997
+        ],
+        [
+          0.889,
+          0.923,
+          1.0,
+          0.854,
+          0.921,
+          0.516,
+          0.925
+        ],
+        [
+          0.989,
+          0.951,
+          0.854,
+          1.0,
+          0.946,
+          0.337,
+          0.946
+        ],
+        [
+          0.959,
+          0.998,
+          0.921,
+          0.946,
+          1.0,
+          0.379,
+          0.999
+        ],
+        [
+          0.354,
+          0.374,
+          0.516,
+          0.337,
+          0.379,
+          1.0,
+          0.382
+        ],
+        [
+          0.961,
+          0.997,
+          0.925,
+          0.946,
+          0.999,
+          0.382,
+          1.0
+        ]
+      ]
+    },
+    "structure": {
+      "weighted_reciprocity": 0.818,
+      "garlaschelli_loffredo_rho": 0.515,
+      "mean_flow_imbalance": 0.603,
+      "median_flow_imbalance": 0.678,
+      "degree_assortativity": -0.184,
+      "max_kcore": 147
+    },
+    "rich_club": {
+      "richness_percentiles": [
+        50,
+        70,
+        80,
+        90,
+        95
+      ],
+      "rho_weighted_normalised": [
+        2.175,
+        4.218,
+        6.735,
+        10.023,
+        10.284
+      ],
+      "null": "strength-preserving weight reshuffle"
+    },
+    "distance_decay": {
+      "beta_euclidean": 0.72,
+      "beta_se": 0.0049,
+      "beta_trip_distance": 0.846,
+      "pseudo_r2_deviance": 0.939,
+      "n_edges_modelled": 41997,
+      "note": "O,D are taxi-activity marginals so this RECONSTRUCTS more than it explains; the residual field below uses the non-circular doubly-constrained model."
+    },
+    "gravity_residual_field": {
+      "beta_doubly_constrained": 1.146,
+      "cpc_doubly_constrained": 0.816,
+      "obs_mean_trip_distance_mi": 2.25,
+      "most_underconnected_core_zones": [
+        {
+          "zone": "Upper East Side North",
+          "surprise": -20.28
+        },
+        {
+          "zone": "Upper West Side South",
+          "surprise": -16.32
+        },
+        {
+          "zone": "Upper East Side South",
+          "surprise": -16.13
+        },
+        {
+          "zone": "Upper West Side North",
+          "surprise": -15.68
+        },
+        {
+          "zone": "Lincoln Square East",
+          "surprise": -12.3
+        },
+        {
+          "zone": "Manhattan Valley",
+          "surprise": -11.35
+        },
+        {
+          "zone": "Yorkville East",
+          "surprise": -9.94
+        },
+        {
+          "zone": "Lincoln Square West",
+          "surprise": -8.24
+        }
+      ],
+      "most_overconnected_core_zones": [
+        {
+          "zone": "Times Sq/Theatre District",
+          "surprise": 9.4
+        },
+        {
+          "zone": "Midtown South",
+          "surprise": 6.26
+        },
+        {
+          "zone": "Clinton East",
+          "surprise": 5.23
+        },
+        {
+          "zone": "Garment District",
+          "surprise": 4.63
+        },
+        {
+          "zone": "Midtown East",
+          "surprise": 4.1
+        },
+        {
+          "zone": "Midtown Center",
+          "surprise": 3.78
+        },
+        {
+          "zone": "Penn Station/Madison Sq West",
+          "surprise": 2.36
+        },
+        {
+          "zone": "Seaport",
+          "surprise": 1.06
+        }
+      ],
+      "east_village_les_in_core": [
+        {
+          "zone": "East Village",
+          "surprise": -5.09,
+          "core_percentile": 0.291
+        },
+        {
+          "zone": "Alphabet City",
+          "surprise": -4.3,
+          "core_percentile": 0.345
+        },
+        {
+          "zone": "Two Bridges/Seward Park",
+          "surprise": -1.82,
+          "core_percentile": 0.6
+        },
+        {
+          "zone": "Chinatown",
+          "surprise": -0.1,
+          "core_percentile": 0.764
+        },
+        {
+          "zone": "Lower East Side",
+          "surprise": 0.77,
+          "core_percentile": 0.836
+        }
+      ]
+    },
+    "backbone": {
+      "alpha": 0.05,
+      "backbone_edges": 6190,
+      "backbone_nodes": 262,
+      "backbone_trip_share_pct": 87.6,
+      "threshold_edges": 7945,
+      "threshold_trip_share_pct": 98.6,
+      "full_edges": 42347
+    },
+    "communities": {
+      "algorithms": {
+        "igraph_multilevel": {
+          "n_communities": 4,
+          "modularity": 0.1862
+        },
+        "leiden_modularity": {
+          "n_communities": 4,
+          "modularity": 0.1893
+        },
+        "infomap_directed": {
+          "n_communities": 1,
+          "modularity": 0.0
+        },
+        "nx_greedy_modularity": {
+          "n_communities": 3
+        },
+        "nx_label_propagation": {
+          "n_communities": 1
+        }
+      },
+      "resolution_sweep": {
+        "0.5": 17,
+        "0.75": 7,
+        "1.0": 4,
+        "1.25": 5,
+        "1.5": 10,
+        "2.0": 16
+      },
+      "seed_stability": {
+        "n_runs": 100,
+        "community_count_mode": 4,
+        "community_count_range": [
+          3,
+          4
+        ],
+        "mean_ARI": 0.751,
+        "min_ARI": 0.421,
+        "mean_AMI": 0.737,
+        "n_pairs": 4950
+      },
+      "vs_administrative": {
+        "leiden_vs_borough_AMI": 0.387,
+        "leiden_vs_borough_ARI": 0.25,
+        "leiden_vs_servicezone_AMI": 0.237
+      },
+      "within_community_trip_share": 0.498,
+      "modularity_significance": {
+        "null": "weight-concentration: edge weights reshuffled, topology and Leiden partition fixed (tests that the partition groups high-flow edges)",
+        "Q_observed": 0.1893,
+        "Q_null_mean": -0.0216,
+        "z_score": 13.8
+      }
+    },
+    "temporal_networks": {
+      "am_peak_top_hubs": [
+        "Midtown Center",
+        "Midtown East",
+        "Times Sq/Theatre District",
+        "Union Sq",
+        "Midtown North",
+        "Murray Hill",
+        "Upper East Side South",
+        "Upper East Side North"
+      ],
+      "late_night_top_hubs": [
+        "East Village",
+        "Clinton East",
+        "Murray Hill",
+        "East Chelsea",
+        "Gramercy",
+        "Lower East Side",
+        "Penn Station/Madison Sq West",
+        "West Village"
+      ],
+      "am_vs_night_hub_jaccard": 0.2,
+      "am_pm_netflow_flip": {
+        "Midtown Center": {
+          "nfi_am": -0.567,
+          "nfi_pm": 0.128
+        },
+        "Financial District North": {
+          "nfi_am": -0.205,
+          "nfi_pm": 0.241
+        },
+        "Penn Station/Madison Sq West": {
+          "nfi_am": 0.26,
+          "nfi_pm": 0.03
+        },
+        "East Village": {
+          "nfi_am": 0.492,
+          "nfi_pm": -0.168
+        },
+        "Lower East Side": {
+          "nfi_am": 0.372,
+          "nfi_pm": -0.209
+        },
+        "Upper East Side North": {
+          "nfi_am": 0.17,
+          "nfi_pm": -0.001
+        },
+        "Times Sq/Theatre District": {
+          "nfi_am": -0.358,
+          "nfi_pm": 0.014
+        }
+      },
+      "nightlife_rank_shift": {
+        "East Village": {
+          "am_rank": 42,
+          "night_rank": 1
+        },
+        "Lower East Side": {
+          "am_rank": 51,
+          "night_rank": 6
+        },
+        "Greenwich Village North": {
+          "am_rank": 29,
+          "night_rank": 29
+        },
+        "Meatpacking/West Village West": {
+          "am_rank": 41,
+          "night_rank": 19
+        },
+        "Clinton East": {
+          "am_rank": 22,
+          "night_rank": 2
+        }
+      },
+      "rhythm_clusters": {
+        "0": {
+          "size": 24,
+          "peak_hour": 8,
+          "examples": [
+            "Upper East Side South",
+            "Upper East Side North",
+            "Murray Hill",
+            "Penn Station/Madison Sq West",
+            "Upper West Side South"
+          ]
+        },
+        "1": {
+          "size": 7,
+          "peak_hour": 23,
+          "examples": [
+            "Lower East Side",
+            "Williamsburg (North Side)",
+            "Williamsburg (South Side)",
+            "Park Slope",
+            "Fort Greene"
+          ]
+        },
+        "2": {
+          "size": 11,
+          "peak_hour": 7,
+          "examples": [
+            "Astoria",
+            "Sunnyside",
+            "Central Harlem North",
+            "Brooklyn Heights",
+            "Hamilton Heights"
+          ]
+        },
+        "3": {
+          "size": 37,
+          "peak_hour": 21,
+          "examples": [
+            "Midtown Center",
+            "Midtown East",
+            "Union Sq",
+            "Times Sq/Theatre District",
+            "Clinton East"
+          ]
+        }
+      }
+    }
+  }
+}
