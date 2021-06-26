@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live map &middot; Transportation Flow Network</title>
+<meta name="description" content="An interactive Leaflet map of 263 NYC taxi zones, recolored by gravity residual, community, net flow by time of day, or destination volume, with an optional overlay of the busiest origin-destination edges.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+<!-- Typography: Newsreader (body + headings) + JetBrains Mono (code) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<!-- Leaflet -->
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
+
+<link rel="stylesheet" href="assets/css/style.css">
+
+<style>
+  /* Page-specific chrome for the live map, kept on-brand. */
+  .map-shell {
+    position: relative;
+    width: 100%;
+    height: 640px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  #map {
+    width: 100%;
+    height: 100%;
+    background: var(--paper);
+    font-family: "Newsreader", Georgia, serif;
+  }
+  /* Leaflet popups + tooltips, restyled to the paper palette */
+  .leaflet-tooltip.tfn-tip {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    box-shadow: 2px 2px 0 rgba(21,21,21,0.12);
+    padding: 6px 9px;
+    white-space: normal;
+    max-width: 220px;
+  }
+  .leaflet-tooltip.tfn-tip:before { display: none; }
+  .tfn-tip .tip-zone { font-weight: 600; }
+  .tfn-tip .tip-boro { color: var(--ink-faint); font-style: italic; }
+  .tfn-tip .tip-metric { display: block; margin-top: 3px; }
+  .tfn-tip .tip-val { font-family: "JetBrains Mono", monospace; }
+
+  /* Control panel */
+  .map-panel {
+    border: 1px solid var(--rule);
+    border-top: none;
+    background: var(--paper);
+    padding: 1rem 1.2rem;
+    font-family: "Newsreader", Georgia, serif;
+  }
+  .map-panel fieldset {
+    border: none;
+    margin: 0 0 0.9rem;
+    padding: 0;
+  }
+  .map-panel legend {
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 0;
+    margin-bottom: 0.45rem;
+  }
+  .metric-choices { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .metric-choices label {
+    display: inline-block;
+    cursor: pointer;
+  }
+  .metric-choices input { position: absolute; opacity: 0; pointer-events: none; }
+  .metric-choices span {
+    display: inline-block;
+    border: 1px solid var(--rule);
+    padding: 0.28rem 0.65rem;
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.12s, color 0.12s;
+  }
+  .metric-choices label:hover span { border-color: var(--ink-faint); }
+  .metric-choices input:checked + span {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .metric-choices input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .period-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .period-row.is-hidden { display: none; }
+  .period-btn {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+  }
+  .period-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .period-btn:hover { border-color: var(--ink-faint); }
+
+  .panel-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--rule);
+    padding-top: 0.85rem;
+  }
+  .legend-box { min-width: 220px; }
+  .legend-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.4rem;
+  }
+  .legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+  }
+  .legend-gradient {
+    height: 12px;
+    flex: 1;
+    min-width: 120px;
+    border: 1px solid var(--rule);
+  }
+  .legend-cats { display: flex; flex-direction: column; gap: 0.2rem; }
+  .legend-cat { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+  .legend-cat i {
+    width: 14px; height: 14px;
+    display: inline-block;
+    border: 1px solid rgba(21,21,21,0.25);
+  }
+  .edge-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.92rem;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .edge-toggle input { width: 1rem; height: 1rem; accent-color: var(--accent); }
+
+  .map-caption {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    margin: 0.7rem 0 0;
+  }
+  .map-caption b { color: var(--ink); font-weight: 600; }
+
+  .leaflet-control-attribution { font-size: 0.62rem; background: rgba(255,255,248,0.85); }
+
+  @media (max-width: 900px) {
+    .map-shell { height: 460px; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="site-title" href="index.html">Transportation Flow Network</a>
+  <nav class="site-nav">
+    <a href="index.html">Overview</a>
+    <a href="methods.html">Method</a>
+    <a href="findings.html">Findings</a>
+    <a href="demo.html">Live map</a>
+    <a href="about.html">About</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Live map</h1>
+  <p>
+    Every claim in the findings is a statement about geography, so here is the geography
+    itself. The map holds all 263 TLC taxi zones. Pick a metric and the zones recolor;
+    hover any zone for its name, borough, and the value being shown. The data is the same
+    yellow-taxi network the rest of the site is built from, with its same honest limit:
+    yellow cabs over-sample Manhattan and the airports, so the outer boroughs are thin by
+    construction, not by accident.
+  </p>
+
+  <figure class="figure-wide">
+    <div class="map-shell">
+      <div id="map" role="application" aria-label="Interactive map of NYC taxi zones"></div>
+    </div>
+
+    <div class="map-panel">
+      <fieldset>
+        <legend>Color zones by</legend>
+        <div class="metric-choices" id="metric-choices">
+          <label><input type="radio" name="metric" value="gravity" checked><span>Where Manhattan ends</span></label>
+          <label><input type="radio" name="metric" value="community"><span>Community</span></label>
+          <label><input type="radio" name="metric" value="netflow"><span>Net flow by time of day</span></label>
+          <label><input type="radio" name="metric" value="volume"><span>Destinations by time of day</span></label>
+        </div>
+      </fieldset>
+
+      <div class="period-row is-hidden" id="period-row" role="group" aria-label="Time of day">
+        <button class="period-btn" data-period="am_peak" aria-pressed="false">AM peak</button>
+        <button class="period-btn" data-period="midday" aria-pressed="false">Midday</button>
+        <button class="period-btn" data-period="pm_peak" aria-pressed="false">PM peak</button>
+        <button class="period-btn" data-period="evening" aria-pressed="true">Evening</button>
+        <button class="period-btn" data-period="late_night_weekend" aria-pressed="false">Late night / weekend</button>
+      </div>
+
+      <div class="panel-foot">
+        <div class="legend-box" id="legend" aria-live="polite"></div>
+        <label class="edge-toggle">
+          <input type="checkbox" id="edge-toggle">
+          Overlay busiest OD edges
+        </label>
+      </div>
+
+      <p class="map-caption" id="map-caption" aria-live="polite"></p>
+    </div>
+
+    <figcaption>
+      <span class="label">Figure.</span> The flow network, made browsable. Four lenses on
+      the same 142.2M trips: the gravity residual that marks where the demand core stops,
+      the four communities the graph splits into, net flow that flips between source and
+      sink as the day turns over, and raw destination pull by daypart. Built with Leaflet
+      over <code>data/zones.geojson</code> and <code>data/top_edges.json</code>.
+    </figcaption>
+  </figure>
+</main>
+
+<footer class="site-footer">
+  <p>
+    Originally a 2016-17 student project on NYC taxi transportation networks; rebuilt as a reproducible pipeline in the 2021 modernization.
+    Source on <a href="https://github.com/nilesh-patil/transportation-flow-network">GitHub</a>.
+    Set with Newsreader; figures regenerated from 142.2M trips.
+  </p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script src="assets/js/demo.js"></script>
+</body>
+</html>

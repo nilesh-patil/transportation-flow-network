@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About · Transportation Flow Network</title>
+  <meta name="description" content="How to reproduce the Transportation Flow Network, the tooling behind it, an honest note on the re-coded 2015 taxi data, and credit for the original 2016-17 student project.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <!-- Typography: Newsreader (body + headings) + JetBrains Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+  <!-- Math: KaTeX via CDN, auto-rendered after load -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+        crossorigin="anonymous">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title" href="index.html">Transportation Flow Network</a>
+    <nav class="site-nav">
+      <a href="index.html">Overview</a>
+      <a href="methods.html">Method</a>
+      <a href="findings.html">Findings</a>
+      <a href="demo.html">Live map</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <h1>About this project</h1>
+
+    <p class="lead">
+      A directed, weighted flow network built from every NYC yellow-taxi trip in
+      2015: 142,199,201 cleaned trips (97.4% of the raw rows) collapsed onto a
+      262-node, 42,347-edge graph whose nodes are TLC taxi zones and whose edge
+      weights are annual trip counts. It started as a 2016-17 student project and
+      was rebuilt in 2021 as a single reproducible pipeline.
+    </p>
+
+    <h2>Reproduce it</h2>
+
+    <p>
+      The whole pipeline is one command. It downloads roughly 2 GB of taxi
+      parquet, cleans and aggregates it out-of-core, builds the graph, runs the
+      analysis, and regenerates every figure. The environment is fully pinned, so
+      a clean checkout should produce the same numbers.
+    </p>
+
+    <pre><code>pixi install
+pixi run pipeline</code></pre>
+
+    <p>
+      Each stage is also runnable on its own, and each one is resumable and skips
+      work it has already finished. The raw parquet lands in
+      <code>data/raw/</code> and is gitignored; the small aggregates in
+      <code>data/processed/</code> are committed, so the figures and analysis can
+      be rebuilt without re-downloading.
+    </p>
+
+    <pre><code>pixi run download   # fetch the 12 monthly parquet files
+pixi run geo        # build census tracts + taxi zones in EPSG:2263
+pixi run ingest     # clean + aggregate 146M trips to a zone edge list (DuckDB)
+pixi run graph      # build the weighted DiGraph; write node/edge tables
+pixi run metrics    # degree, hub asymmetry, baseline community
+pixi run temporal   # monthly volume, hour x weekday, cost vs duration
+pixi run analysis   # gravity, backbone, centralities, communities
+pixi run figures    # regenerate every figure (PNG + SVG)
+pixi run summary    # print the headline measured numbers</code></pre>
+
+    <h2>Tooling</h2>
+
+    <p>
+      Nothing exotic, and everything pinned. <a href="https://pixi.sh">Pixi</a>
+      manages the environment and the task graph above.
+      <a href="https://duckdb.org">DuckDB</a> and
+      <a href="https://pola.rs">Polars</a> do the out-of-core cleaning and
+      aggregation of 146 million rows.
+      <a href="https://geopandas.org">GeoPandas</a> handles the spatial layer:
+      dissolving the in-repo 2010 block shapefile into census tracts, building the
+      taxi-zone geometries in EPSG:2263, and the zone-to-tract crosswalk.
+      <a href="https://networkx.org">NetworkX</a> and
+      <a href="https://igraph.org">igraph</a> carry the network science: the
+      directed graph, centralities, the statistical backbone, and community
+      detection with Leiden plus a seed-stability study. Math on the figures and
+      Method page is rendered with KaTeX.
+    </p>
+
+    <h2>A note on the data</h2>
+
+    <p>
+      One honest caveat shaped the whole rebuild. The NYC TLC re-coded its
+      historical trip data. The 2015 yellow parquet on the official mirror no
+      longer carries pickup and dropoff latitude and longitude; it carries taxi
+      zone ids (<code>PULocationID</code> / <code>DOLocationID</code>), and the
+      original lat/long CSVs are no longer distributed. So the original project's
+      central engineering problem, binning splintered points onto census tracts,
+      is now solved upstream. We use the 263 TLC taxi zones as network nodes
+      rather than census tracts. A taxi zone overlaps about 19 census tracts on
+      average, so this is a real, deliberate drop in spatial resolution, recorded
+      and quantified rather than hidden.
+    </p>
+
+    <p>
+      The deeper caveat is the data source itself. Yellow taxis over-sample
+      Manhattan and the airports and under-sample the outer boroughs, so the
+      network describes how the yellow-cab city moves, not how everyone moves.
+      Every finding here should be read with that coverage bias in mind. The
+      <a href="methods.html">Method</a> page states the cleaning filters and the
+      model assumptions in full.
+    </p>
+
+    <h2>Read more</h2>
+
+    <p>
+      The full writeup, with the gravity model, the backbone, the community
+      analysis, and the temporal decomposition, is in
+      <a href="https://github.com/nilesh-patil/transportation-flow-network/blob/main/docs/paper.md">the paper</a>.
+      Every measured number, the decisions behind them, and how they reconcile
+      with the original 2016-17 blog figures are in the
+      <a href="https://github.com/nilesh-patil/transportation-flow-network/blob/main/MODERNIZATION_NOTES.md">modernization notes</a>,
+      which also record the eight-agent adversarial audit that re-derived the
+      headline numbers from the raw parquet. All of it, including the pipeline and
+      the preserved original notebooks under <code>legacy/</code>, is in the
+      <a href="https://github.com/nilesh-patil/transportation-flow-network">source repository</a>.
+    </p>
+
+    <h2>Credit</h2>
+
+    <p>
+      This began as a 2016-17 student project on NYC taxi transportation
+      networks, a pile of numbered Jupyter notebooks and a blog post. The 2021
+      modernization turned it into one reproducible pipeline with modern tooling,
+      regenerated every original figure with real numbers attached, and added a
+      research-grade network-science layer on top. The original notebooks, plots,
+      and report are kept under <code>legacy/</code> in the repository, both as
+      provenance and so the before-and-after is honest.
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Originally a 2016-17 student project on NYC taxi transportation networks; rebuilt as a reproducible pipeline in the 2021 modernization.
+      Source on <a href="https://github.com/nilesh-patil/transportation-flow-network">GitHub</a>.
+      Set with Newsreader; figures regenerated from 142.2M trips.
+    </p>
+  </footer>
+</body>
+</html>

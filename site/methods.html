@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Method · Transportation Flow Network</title>
+  <meta name="description" content="How the OD graph is built and read: a doubly-constrained gravity model, the residual that locates where Manhattan ends, the disparity-filter backbone, directed centralities, and seed-stable Leiden communities over 142.2M NYC taxi trips.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <!-- Typography: Newsreader (body + headings) + JetBrains Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+  <!-- Math: KaTeX via CDN, auto-rendered after load -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+        crossorigin="anonymous">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title" href="index.html">Transportation Flow Network</a>
+    <nav class="site-nav">
+      <a href="index.html">Overview</a>
+      <a href="methods.html">Method</a>
+      <a href="findings.html">Findings</a>
+      <a href="demo.html">Live map</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+
+  <main class="site-main">
+
+    <div class="epigraph">
+      <p>Every number on this page comes from one pipeline run over 142,199,201 yellow-taxi trips, the 97.4% that survived cleaning. The graph it builds is small enough to read by eye and structured enough to argue with. What follows is how it is built, and how each measurement is meant to be read, including the places where the data answers a narrower question than the one you might want to ask.</p>
+    </div>
+
+    <p><span class="newthought">A transportation network</span> is a deceptively simple object: take every trip, write down where it started and where it ended, and add up the trips between each pair of places. The 2015 yellow-taxi parquet had already been re-coded from raw latitude and longitude to the 263 TLC taxi zones, so the natural unit is the zone, not the census tract the 2016-17 student version used. That re-coding is a constraint, not a choice. There are no point coordinates to recover, so the nodes are zones and everything downstream inherits that resolution.</p>
+
+    <h2 id="od-graph">Building the OD graph</h2>
+
+    <p>Let each taxi zone be a node. For every ordered pair of zones <span>\((i, j)\)</span> the edge weight <span>\(w_{ij}\)</span> is the number of trips that began in zone <span>\(i\)</span> and ended in zone <span>\(j\)</span> across all of 2015. The result is a directed, weighted graph: direction matters because a morning flow into Midtown is a different fact than the evening flow out, and weight matters because the busiest edges carry millions of trips while the median edge carries a handful.</p>
+
+    <p>The 2016-17 pass treated the graph as undirected and counted a single degree per node, which collapsed exactly the asymmetry that turns out to be the interesting part. Keeping the direction is the single most consequential modelling decision here.</p>
+
+    <p>Two bookkeeping facts shape the node and edge counts. First, 4.5% of trips are self-loops, trips that start and end in the same zone; these are dropped from the off-diagonal flow analysis because a zone-to-itself trip says nothing about between-zone structure. Second, the full graph has 262 active nodes and 42,347 directed edges, but most of those edges are noise: the mean in-degree is 161, and the long thin tail is single-trip pairs. The 2016-17 project handled this with a flat rule, keep edges with more than 500 trips per year, which leaves 7,945 edges over 228 nodes carrying 98.6% of all trips. That cut is honest but arbitrary; a principled alternative appears <a href="#backbone">below</a>.</p>
+
+    <h2 id="gravity">The doubly-constrained gravity model</h2>
+
+    <p>The oldest idea in spatial interaction is that flow between two places grows with their size and falls with the distance between them, like gravity. The naive version fits trips against the product of origin and destination activity and a distance term. On this data that version is close to circular: the only measures of zone "size" available are the taxi marginals themselves, the row sums and column sums of the same OD matrix being fit. A model that predicts taxi flow from taxi volume reconstructs more than it explains. Fit that way the Euclidean decay exponent lands at <span>\(\beta = 0.72\)</span> with a pseudo-<span>\(R^2\)</span> of 0.94, which sounds impressive and means little.</p>
+
+    <p>The non-circular version is the <em>doubly-constrained</em> gravity model. Instead of treating the marginals as predictors, it conditions on them exactly. The expected flow is</p>
+
+    <p>$$ \hat{T}_{ij} = A_i\, O_i\, B_j\, D_j\, f(d_{ij}), \qquad f(d_{ij}) = e^{-\beta\, d_{ij}} $$</p>
+
+    <p>where <span>\(O_i\)</span> is the total outflow of zone <span>\(i\)</span>, <span>\(D_j\)</span> the total inflow of zone <span>\(j\)</span>, and <span>\(d_{ij}\)</span> the centroid distance. The balancing factors <span>\(A_i\)</span> and <span>\(B_j\)</span> are solved iteratively so that the predicted row and column sums match the observed ones exactly:</p>
+
+    <p>$$ A_i = \frac{1}{\sum_j B_j\, D_j\, f(d_{ij})}, \qquad B_j = \frac{1}{\sum_i A_i\, O_i\, f(d_{ij})} $$</p>
+
+    <p>Because every zone's own production and attraction are now held fixed, the model can no longer take credit for the fact that Midtown is busy. The only free parameter left to explain structure is the distance function, and all the residual signal is genuinely about <em>who connects to whom given how big they are and how far apart they sit</em>. Calibrated this way the decay exponent rises to <span>\(\beta = 1.146\)</span>, steeper than the circular fit because distance now has to do the work the marginals were quietly doing before.</p>
+
+    <figure>
+      <img src="assets/figures/11_distance_decay.svg" alt="Annual trips per origin-destination pair plotted against centroid distance, with a fitted exponential decay curve at beta equals 1.146." />
+      <figcaption><span class="label">Figure 1.</span> Annual trips per OD pair against centroid distance, with the calibrated doubly-constrained decay exponent <span>\(\beta = 1.146\)</span>. Flow falls off steeply with distance, a quantitative reading of Tobler's first law for taxi travel.</figcaption>
+    </figure>
+
+    <p>How well the model fits is best judged not by <span>\(R^2\)</span> but by the Common Part of Commuters, the share of total flow that the model places on the right edges:</p>
+
+    <p>$$ \mathrm{CPC} = \frac{2 \sum_{ij} \min(T_{ij},\, \hat{T}_{ij})}{\sum_{ij} T_{ij} + \sum_{ij} \hat{T}_{ij}} $$</p>
+
+    <p>It runs from 0 to 1 and is unforgiving: it rewards a model only for flow it puts in the correct cells. The doubly-constrained fit scores <span>\(\mathrm{CPC} = 0.816\)</span> over the high-coverage core. That is a good fit for a model with one shape parameter, and the 18% it misses is exactly the part worth mapping.</p>
+
+    <figure>
+      <img src="assets/figures/12_gravity_fit.svg" alt="Scatter of observed versus doubly-constrained-gravity-predicted OD flows, clustered around the diagonal." />
+      <figcaption><span class="label">Figure 2.</span> Observed against gravity-predicted OD flows in the high-coverage core, <span>\(\mathrm{CPC} = 0.816\)</span>. Points off the diagonal are the residual "surprise" that the next section maps geographically.</figcaption>
+    </figure>
+
+    <h3 id="manhattan-ends">Where Manhattan ends</h3>
+
+    <p>The residual of the doubly-constrained model is a per-zone statement, not a per-edge one. For each zone, average the signed deviance residual <span>\(T_{ij} - \hat{T}_{ij}\)</span> over its edges. A negative average means the zone is <em>under-connected</em>: it carries less taxi flow than its size and location predict. A positive average means it is <em>over-connected</em>. Because the model already controls for each zone's own volume and for distance, the residual cannot be explained by "it's small" or "it's far." It measures something closer to functional centrality.</p>
+
+    <p>Read this way, the most under-connected core zones are not on the edge of the map at all. Upper East Side North sits at a surprise of <span>\(-20.3\)</span>, Upper West Side South at <span>\(-16.3\)</span>, and the rest of the Upper East and Upper West Sides follow close behind. The East Village and Alphabet City are under-connected too, at <span>\(-5.1\)</span> and <span>\(-4.3\)</span>, despite sitting near the geographic centre. The most over-connected zones are the obvious magnets: Times Square at <span>\(+9.4\)</span>, Midtown South at <span>\(+6.3\)</span>, Clinton East at <span>\(+5.2\)</span>.</p>
+
+    <p>The phrase "where Manhattan ends" is a claim that functional Manhattan, the part wired into the taxi network beyond its sheer size, ends well inside the island's geographic edge. The residential Upper East and Upper West Sides and the East Village are peripheral despite their central addresses; the commercial spine from Times Square through Midtown is the real core. This is a gravity residual, not a popularity ranking, which is the whole point: it survives controlling for volume.</p>
+
+    <h2 id="backbone">The disparity-filter backbone</h2>
+
+    <p>The flat ">500 trips" cut keeps loud edges and discards quiet ones, but loudness is relative. An edge of 600 trips out of a zone whose busiest edge carries a million is statistical noise; an edge of 600 out of a sleepy zone whose total outflow is 2,000 is that zone's defining connection. A global threshold cannot see the difference because it ignores the local context of each node.</p>
+
+    <p>The disparity filter fixes this by asking, for each node, whether each of its edges carries more weight than a uniform random split of that node's strength would produce. For a node of degree <span>\(k\)</span>, normalise its edge weights to fractions <span>\(p_{ij}\)</span> that sum to 1, then keep an edge only if its fraction is significant under the null that the <span>\(k\)</span> fractions were drawn uniformly at random:</p>
+
+    <p>$$ \alpha_{ij} = 1 - (k-1)\int_0^{p_{ij}} (1-x)^{\,k-2}\, dx \;=\; (1 - p_{ij})^{\,k-1} $$</p>
+
+    <p>Edges with <span>\(\alpha_{ij} &lt; 0.05\)</span> survive. An edge is kept if it is locally salient at <em>either</em> of its endpoints, so a quiet zone's lifeline is preserved even when the busy end would have discarded it.</p>
+
+    <figure class="figure-wide">
+      <img src="assets/figures/14_backbone.svg" alt="The multiscale backbone of the flow network drawn on geography, a sparse skeleton of locally significant edges." />
+      <figcaption><span class="label">Figure 3.</span> The multiscale backbone from the disparity filter at <span>\(\alpha = 0.05\)</span>: 6,190 edges retain 87.6% of all trips, a principled alternative to the arbitrary ">500-trip" cut that needs 7,945 edges to reach 98.6%.</figcaption>
+    </figure>
+
+    <p>The backbone keeps 6,190 edges over 262 nodes and still carries 87.6% of all trips. The flat threshold needs 7,945 edges to reach 98.6%. The backbone is sparser and trades a little volume coverage for a defensible criterion: every edge it keeps earns its place against its own node's profile rather than against a number chosen by hand.</p>
+
+    <h2 id="centrality">Directed centralities and core structure</h2>
+
+    <p>With direction preserved, a zone can be important in more than one way. Strength counts trips; PageRank counts flow that arrives via important neighbours; the HITS hub and authority scores separate "places people leave from" from "places people go to"; betweenness counts brokerage along shortest paths; eigenvector centrality counts being connected to the well-connected. The question is whether these measures see different things or just rank the same hubs over and over.</p>
+
+    <figure>
+      <img src="assets/figures/13_centrality_correlation.svg" alt="Heatmap of Spearman rank correlations among directed centrality measures." />
+      <figcaption><span class="label">Figure 4.</span> Spearman rank correlation among centrality measures. PageRank, strength, and eigenvector move almost in lockstep; betweenness stands apart, capturing brokerage rather than volume.</figcaption>
+    </figure>
+
+    <p>Mostly they agree. PageRank correlates with in-strength at <span>\(\rho = 0.92\)</span>, and in-strength with eigenvector and HITS-authority at <span>\(\rho \approx 0.997\)</span>. The exception is betweenness, which sits at <span>\(\rho \approx 0.35\)</span> against everything else. Betweenness measures lying on shortest paths between other zones, the broker role, and in a network this dense and hub-dominated brokerage is a genuinely different property from volume. The HITS split also pays off: a zone can be a strong hub (people leave) without being a strong authority (people arrive), which is the static shadow of the day/night reversal explored on the <a href="findings.html">findings</a> page.</p>
+
+    <p>Beyond ranking individual nodes, the network has a dense interior. The maximum <span>\(k\)</span>-core is 147, meaning there is a set of zones each connected to at least 147 others within that same set, an unusually thick core for a 262-node graph. The rich-club coefficient asks whether high-strength zones connect to each other more than chance allows; normalised against a strength-preserving weight reshuffle, it climbs from 2.2 at the 50th richness percentile to 10.3 at the 95th. The hubs do not merely exist, they preferentially wire to one another. Weighted reciprocity is 0.818, so most flow is matched by a return flow over the year, even though the daily picture is far more directional.</p>
+
+    <h2 id="communities">Community detection</h2>
+
+    <p>The last question is whether the network partitions into functional districts that ignore administrative lines. Community detection maximises modularity <span>\(Q\)</span>, the share of edge weight that falls inside communities minus what you would expect if the same weights were wired at random:</p>
+
+    <p>$$ Q = \frac{1}{2m} \sum_{ij} \left( w_{ij} - \frac{s_i^{\text{out}}\, s_j^{\text{in}}}{2m} \right) \delta(c_i, c_j) $$</p>
+
+    <p>Several algorithms were run as a cross-check. Leiden returns 4 communities at <span>\(Q = 0.189\)</span>; igraph multilevel agrees at 4 (<span>\(Q = 0.186\)</span>); greedy modularity finds 3. Infomap and label propagation collapse to a single community, which is itself informative: on a graph this densely interconnected, flow-based methods see one big blob, and only modularity-based methods resolve the structure. The result reported is Leiden, which optimises the same objective as the classic Louvain method but guarantees well-connected communities.</p>
+
+    <figure class="figure-wide">
+      <img src="assets/figures/07_community_map.svg" alt="The four Leiden communities drawn on the NYC map, cutting across borough boundaries." />
+      <figcaption><span class="label">Figure 5.</span> The four Leiden communities, weighted and directed-aware. The partition cuts across borough lines, redrawing the city by taxi connectivity rather than administration.</figcaption>
+    </figure>
+
+    <p>Two questions decide whether four communities is a finding or an artifact: is it stable, and is it significant. For stability, the partition was run 100 times from different seeds. The community count is 4 in the mode (range 3 to 4), the mean Adjusted Rand Index between runs is 0.751, and the mean Adjusted Mutual Information is 0.737. The same zones land together run after run, so the partition is not a fluke of one lucky seed.</p>
+
+    <p>For significance, a flat <span>\(Q = 0.189\)</span> is not obviously large; modularity is positive for almost any partition. The right null holds the topology and the Leiden partition fixed and reshuffles only the edge <em>weights</em>, asking whether the partition actually groups the high-flow edges or just the edges. Under that null the mean modularity is <span>\(-0.022\)</span>, and the observed value sits <span>\(13.8\)</span> standard deviations above it. The communities concentrate real flow, not just connections.</p>
+
+    <p>The partition disagrees sharply with administration: against borough labels it scores an AMI of only 0.387, and against TLC service zones 0.237. Almost half of all trips, 49.8%, stay within a single community, and the off-diagonal block structure shows which functional districts are coupled and in which direction.</p>
+
+    <figure>
+      <img src="assets/figures/16_intercommunity_flow.svg" alt="Matrix of trip shares between the four Leiden communities, with a strong diagonal and asymmetric off-diagonal blocks." />
+      <figcaption><span class="label">Figure 6.</span> Trip shares between the four Leiden communities. Half of all trips stay within a community; the asymmetric off-diagonal blocks show directional coupling between functional districts.</figcaption>
+    </figure>
+
+    <h2 id="caveat">What the data can and cannot say</h2>
+
+    <p>One caveat governs every number above. Yellow taxis over-sample Manhattan and the airports and under-sample the outer boroughs, where for-hire vehicles and the subway carry far more of the load. The most peripheral zones by this measure, Marine Park, Mariners Harbor, Pelham Bay Park, sit near 10 trips per source not because nobody travels there but because few do so by yellow cab. This is a map of yellow-taxi travel, not of all movement.</p>
+
+    <p>That is why the gravity residual and the community analysis are scoped to the high-coverage core, and why the strongest claims here are relative ones, made between zones the yellow fleet actually serves. The re-coding from coordinates to zones sets the resolution; the fleet's coverage sets the population. Within those limits the structure is sharp, stable, and reproducible. Outside them, the network goes quiet, and the right thing to do is say so rather than read the silence as absence. The <a href="findings.html">findings</a> page takes these instruments and points them at the city.</p>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Originally a 2016-17 student project on NYC taxi transportation networks; rebuilt as a reproducible pipeline in the 2021 modernization.
+      Source on <a href="https://github.com/nilesh-patil/transportation-flow-network">GitHub</a>.
+      Set with Newsreader; figures regenerated from 142.2M trips.
+    </p>
+  </footer>
+
+  <!-- KaTeX auto-render -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+          integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+          crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+          integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
+          crossorigin="anonymous"
+          onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+</body>
+</html>

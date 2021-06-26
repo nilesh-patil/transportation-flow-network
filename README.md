@@ -72,6 +72,20 @@ The raw parquet stays in `data/raw/` and is gitignored. Small aggregates
 (`data/processed/`) are committed so the figures and analysis can be rebuilt
 without re-downloading.
 
+## Project website
+
+A self-contained static site lives under `site/` (Overview, Method, Findings, a
+live interactive map, and About), in the Tufte editorial style. The `site/demo.html`
+map loads the exported zone geometry and lets you recolor NYC by gravity residual,
+community, or net flow by time of day. Serve it locally with:
+
+```bash
+cd site && python3 -m http.server   # then open http://localhost:8000
+```
+
+The map and findings data are regenerated from the pipeline outputs with
+`pixi run python scripts/export_site_data.py`.
+
 ## A note on the data
 
 The NYC TLC re-coded its historical trip data. The 2015 yellow parquet on the
