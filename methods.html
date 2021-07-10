@@ -35,6 +35,8 @@
 
   <main class="site-main">
 
+    <h1 class="visually-hidden">Method: how the taxi flow network is built and read</h1>
+
     <div class="epigraph">
       <p>Every number on this page comes from one pipeline run over 142,199,201 yellow-taxi trips, the 97.4% that survived cleaning. The graph it builds is small enough to read by eye and structured enough to argue with. What follows is how it is built, and how each measurement is meant to be read, including the places where the data answers a narrower question than the one you might want to ask.</p>
     </div>
@@ -47,7 +49,7 @@
 
     <p>The 2016-17 pass treated the graph as undirected and counted a single degree per node, which collapsed exactly the asymmetry that turns out to be the interesting part. Keeping the direction is the single most consequential modelling decision here.</p>
 
-    <p>Two bookkeeping facts shape the node and edge counts. First, 4.5% of trips are self-loops, trips that start and end in the same zone; these are dropped from the off-diagonal flow analysis because a zone-to-itself trip says nothing about between-zone structure. Second, the full graph has 262 active nodes and 42,347 directed edges, but most of those edges are noise: the mean in-degree is 161, and the long thin tail is single-trip pairs. The 2016-17 project handled this with a flat rule, keep edges with more than 500 trips per year, which leaves 7,945 edges over 228 nodes carrying 98.6% of all trips. That cut is honest but arbitrary; a principled alternative appears <a href="#backbone">below</a>.</p>
+    <p>Two bookkeeping facts shape the node and edge counts. First, 4.5% of trips are self-loops, trips that start and end in the same zone; these are dropped from the off-diagonal flow analysis because a zone-to-itself trip says nothing about between-zone structure. Second, the full graph has 262 active nodes and 42,347 directed edges, but most of those edges are noise: the mean in-degree is 162, and the long thin tail is single-trip pairs. The 2016-17 project handled this with a flat rule, keep edges with more than 500 trips per year, which leaves 7,945 edges over 228 nodes carrying 98.6% of all trips. That cut is honest but arbitrary; a principled alternative appears <a href="#backbone">below</a>.</p>
 
     <h2 id="gravity">The doubly-constrained gravity model</h2>
 
@@ -55,7 +57,7 @@
 
     <p>The non-circular version is the <em>doubly-constrained</em> gravity model. Instead of treating the marginals as predictors, it conditions on them exactly. The expected flow is</p>
 
-    <p>$$ \hat{T}_{ij} = A_i\, O_i\, B_j\, D_j\, f(d_{ij}), \qquad f(d_{ij}) = e^{-\beta\, d_{ij}} $$</p>
+    <p>$$ \hat{T}_{ij} = A_i\, O_i\, B_j\, D_j\, f(d_{ij}), \qquad f(d_{ij}) = d_{ij}^{-\beta} $$</p>
 
     <p>where <span>\(O_i\)</span> is the total outflow of zone <span>\(i\)</span>, <span>\(D_j\)</span> the total inflow of zone <span>\(j\)</span>, and <span>\(d_{ij}\)</span> the centroid distance. The balancing factors <span>\(A_i\)</span> and <span>\(B_j\)</span> are solved iteratively so that the predicted row and column sums match the observed ones exactly:</p>
 
