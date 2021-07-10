@@ -1,4 +1,4 @@
-/* Transportation Flow Network — live map
+/* Transportation Flow Network - live map
    Leaflet 1.9 over data/zones.geojson + data/top_edges.json.
    Recolors 263 taxi zones by a user-selected metric; optional OD-edge overlay. */
 (function () {
@@ -21,6 +21,13 @@
   var GREEN = [27, 120, 55], MIDG = [245, 245, 238], PURPLE = [118, 42, 131];   // net flow
   var SEQ_LO = [247, 247, 234], SEQ_HI = [25, 65, 110];                          // volume (sequential)
   var COMMUNITY = ["#a32015", "#1f6db0", "#3f8f4f", "#b8860b"];                  // categorical
+  var COMMUNITY_NAMES = [                                                        // Leiden ids -> dominant area
+    "Midtown commercial core",
+    "Outer boroughs + airports",
+    "Downtown + Brooklyn",
+    "Upper Manhattan + Bronx"
+  ];
+  function communityName(c) { return (c == null) ? "n/a" : (COMMUNITY_NAMES[c] || ("Community " + c)); }
   var NODATA = "#e7e7df";
 
   // ---- metric definitions --------------------------------------------------
@@ -49,8 +56,10 @@
   var geoLayer = null, edgeLayer = null, zonesData = null, edgesData = null;
   var edgeMax = 1;
 
+  // Frame the Manhattan core on load: the default "where Manhattan ends" view
+  // lives there, and most zones elsewhere are outside the high-coverage core.
   var map = L.map("map", { zoomControl: true, attributionControl: true })
-    .setView([40.74, -73.98], 11);
+    .setView([40.773, -73.965], 12);
 
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -103,7 +112,7 @@
       return "gravity residual: <span class='tip-val'>" + (g == null ? "n/a" : g.toFixed(2)) + "</span>";
     }
     if (state.metric === "community") {
-      return "community: <span class='tip-val'>" + (props.community == null ? "n/a" : props.community) + "</span>";
+      return "community: <span class='tip-val'>" + communityName(props.community) + "</span>";
     }
     if (state.metric === "netflow") {
       var nf = props["nfi_" + state.period];
@@ -152,14 +161,16 @@
     if (state.metric === "gravity") {
       var gs = buildGradientStops(function (t) { return diverging(t, BLUE, WHITE, RED); }, 24);
       html =
-        "<div class='legend-title'>Gravity residual (log)</div>" +
+        "<div class='legend-title'>Gravity residual</div>" +
         "<div class='legend-bar'><span>under (-" + GRAV_LIM + ")</span>" +
         "<span class='legend-gradient' style='background:" + gradientCss(gs) + "'></span>" +
-        "<span>over (+" + GRAV_LIM + ")</span></div>";
+        "<span>over (+" + GRAV_LIM + ")</span></div>" +
+        "<div class='legend-cat' style='margin-top:.4rem'><i style='background:" + NODATA +
+        "'></i>gray = outside the high-coverage core</div>";
     } else if (state.metric === "community") {
       var cats = "";
       for (var i = 0; i < COMMUNITY.length; i++) {
-        cats += "<span class='legend-cat'><i style='background:" + COMMUNITY[i] + "'></i>Community " + i + "</span>";
+        cats += "<span class='legend-cat'><i style='background:" + COMMUNITY[i] + "'></i>" + COMMUNITY_NAMES[i] + "</span>";
       }
       html = "<div class='legend-title'>Leiden communities (4)</div><div class='legend-cats'>" + cats + "</div>";
     } else if (state.metric === "netflow") {
@@ -190,9 +201,9 @@
         "sit under-connected in blue. The edge of red is the edge of the network's idea of Manhattan.";
     } else if (state.metric === "community") {
       c.innerHTML = "<b>Four communities.</b> An undirected Leiden projection splits the graph into " +
-        "four blocks (significance z = 13.8). They track geography more than administrative borough " +
-        "lines: Manhattan's core, the bridge-and-tunnel periphery, and the airport corridors fall " +
-        "into distinct groups.";
+        "four blocks (significance z = 13.8) that track function more than borough lines: a Midtown " +
+        "commercial core, an Upper Manhattan and Bronx group, a downtown-and-Brooklyn group, and a " +
+        "large outer-borough and airport community.";
     } else if (state.metric === "netflow") {
       c.innerHTML = "<b>Net flow, " + PERIOD_LABEL[state.period] + ".</b> Green zones send more than " +
         "they receive (sources); purple zones receive more than they send (sinks). " + NF_CAPTION[state.period];

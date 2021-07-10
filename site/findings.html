@@ -147,7 +147,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/06_degree_vs_trips.svg" alt="Scatter of zone in- and out-degree against total trips, separating high-volume inner-city draws from high-degree airports.">
     <figcaption>
-      <span class="label">Figure 6.</span> In- and out-degree against total trips. Inner-city
+      <span class="label">Figure 1.</span> In- and out-degree against total trips. Inner-city
       draws like Penn Station and Midtown pull huge volume from a limited Manhattan origin set;
       airports pull from many scattered origins, giving them high degree but lower trips per source.
     </figcaption>
@@ -231,7 +231,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/08_where_manhattan_ends.svg" alt="Choropleth of per-zone gravity-model residuals across the Manhattan core; blue under-connected zones, red over-connected zones.">
     <figcaption>
-      <span class="label">Figure 8.</span> Per-zone mean deviance residual from the
+      <span class="label">Figure 2.</span> Per-zone mean deviance residual from the
       doubly-constrained gravity model, scoped to the high-coverage core. Blue zones are
       under-connected given their location, functionally peripheral despite central geography;
       red zones around Times Square and Midtown are over-connected.
@@ -322,7 +322,7 @@
       <img src="assets/figures/09_net_flow_source_sink.svg" alt="Annual net-flow index per zone, mostly near balanced over a full year.">
     </figure>
     <figcaption>
-      <span class="label">Figures 10 and 9.</span> Left: the AM/PM net-flow sign flip. Midtown and
+      <span class="label">Figures 3 and 4.</span> Left: the AM/PM net-flow sign flip. Midtown and
       the Financial District are AM sinks and PM sources; the East Village and Lower East Side are
       the reverse, and the East Village climbs from roughly 42nd destination by day to 1st at night.
       Right: over a full year, the net-flow index leaves most zones near balanced, which is why the
@@ -396,7 +396,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/01_monthly_volume.svg" alt="Monthly trip counts across 2015, peaking in spring and declining through the second half of the year.">
     <figcaption>
-      <span class="label">Figure 1.</span> Monthly trip counts. Volume peaks in spring (March-May,
+      <span class="label">Figure 5.</span> Monthly trip counts. Volume peaks in spring (March-May,
       highlighted) and runs 11.8% lower across June-December. The decline is confounded by
       ride-hailing growth through 2015, not just weather.
     </figcaption>
@@ -412,7 +412,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/03_hour_weekday_heatmap.svg" alt="Heatmap of trip density by hour of day and day of week, with bright weekday-commute and weekend-late-night bands.">
     <figcaption>
-      <span class="label">Figure 3.</span> Hour by weekday density. Bright bands at the weekday
+      <span class="label">Figure 6.</span> Hour by weekday density. Bright bands at the weekday
       6-9 AM and evening commute and at the weekend 0-4 AM hours reproduce the original heatmap
       finding, now on the full year.
     </figcaption>
@@ -428,7 +428,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/15_daily_rhythms.svg" alt="K-means clusters of zones by their 24-hour weekday pickup shape, separating morning, evening, and late-night peaks.">
     <figcaption>
-      <span class="label">Figure 15.</span> K-means clusters of each zone's 24-hour weekday pickup
+      <span class="label">Figure 7.</span> K-means clusters of each zone's 24-hour weekday pickup
       shape. Commuter-residential (morning peak, hour 8), commercial core (evening peak, hour 21)
       and nightlife (late-night peak near hour 23; Lower East Side, Williamsburg) separate cleanly.
     </figcaption>
@@ -449,7 +449,7 @@
   <figure class="figure-wide">
     <img src="assets/figures/04_cost_vs_duration.svg" alt="Scatter of fare against trip duration showing a flat band at about $52 independent of duration.">
     <figcaption>
-      <span class="label">Figure 4.</span> Fare versus duration. The flat band at about $52,
+      <span class="label">Figure 8.</span> Fare versus duration. The flat band at about $52,
       independent of duration, is the JFK flat fare (RatecodeID 2). This explains the
       "constant-cost outliers" the original guessed were rounded tips.
     </figcaption>
@@ -491,10 +491,10 @@
         <td>2015 parquet has zone IDs, not lat/long</td>
       </tr>
       <tr>
-        <td>Top edges shown</td>
-        <td class="num">1,275</td>
-        <td class="num">600</td>
-        <td>Different threshold on a coarser node set</td>
+        <td>Frequent edges (&gt;500/yr)</td>
+        <td class="num">~1,275</td>
+        <td class="num">7,945</td>
+        <td>Zone aggregation packs trips into fewer, heavier pairs; the blog counted a Manhattan tract subset</td>
       </tr>
       <tr>
         <td>"Constant-cost outliers"</td>
