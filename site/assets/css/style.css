@@ -50,8 +50,8 @@
   --serif: "Newsreader", Georgia, "Times New Roman", serif;
   --mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --measure:      720px;   /* reading column   */
-  --measure-wide: 960px;   /* figure breakout  */
+  --measure:      820px;   /* reading column   */
+  --measure-wide: 1180px;  /* figure breakout  */
   --line:         1.55;    /* generous body leading */
 
   /* Spacing */
@@ -66,7 +66,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
-  font-size: 18px;
+  font-size: 19px;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -498,6 +498,7 @@ iframe {
 }
 .statrow .stat {
   flex: 1 1 8rem;
+  text-align: center;
 }
 .statrow .stat .value {
   display: block;
