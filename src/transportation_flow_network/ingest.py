@@ -46,13 +46,13 @@ def _con() -> duckdb.DuckDBPyConnection:
     return con
 
 
-def process_month(month: str) -> None:
-    out = C.PARTIAL_DIR / f"{C.YEAR}-{month}"
+def process_month(year: int, month: str) -> None:
+    out = C.PARTIAL_DIR / f"{year}-{month}"
     if (out / "_done").exists():
-        print(f"  [{month}] cached, skipping")
+        print(f"  [{year}-{month}] cached, skipping")
         return
     out.mkdir(parents=True, exist_ok=True)
-    f = C.raw_parquet(month).as_posix()
+    f = C.raw_parquet(month, year).as_posix()
     con = _con()
 
     # --- cleaning statistics over the RAW file (drop reasons may overlap) ---
@@ -68,7 +68,7 @@ def process_month(month: str) -> None:
                              NOT BETWEEN {C.MIN_DURATION_MIN} AND {C.MAX_DURATION_MIN}) AS bad_duration,
           count(*) FILTER (WHERE fare_amount NOT BETWEEN {C.MIN_FARE} AND {C.MAX_FARE}) AS bad_fare,
           count(*) FILTER (WHERE trip_distance NOT BETWEEN 0 AND {C.MAX_TRIP_DISTANCE}) AS bad_distance,
-          count(*) FILTER (WHERE year(tpep_pickup_datetime) <> {C.YEAR}) AS out_of_year
+          count(*) FILTER (WHERE year(tpep_pickup_datetime) <> {year}) AS out_of_year
         FROM read_parquet('{f}')
     """).fetchdf().iloc[0].to_dict()
 
@@ -93,7 +93,7 @@ def process_month(month: str) -> None:
               BETWEEN {C.MIN_DURATION_MIN} AND {C.MAX_DURATION_MIN}
           AND fare_amount BETWEEN {C.MIN_FARE} AND {C.MAX_FARE}
           AND trip_distance BETWEEN 0 AND {C.MAX_TRIP_DISTANCE}
-          AND year(tpep_pickup_datetime) = {C.YEAR}
+          AND year(tpep_pickup_datetime) = {year}
     """)
     stats["kept"] = con.execute("SELECT count(*) FROM clean").fetchone()[0]
 
@@ -160,64 +160,98 @@ def process_month(month: str) -> None:
     con.close()
     (out / "_done").write_text("ok")
     kept_pct = 100.0 * stats["kept"] / stats["raw_rows"]
-    print(f"  [{month}] raw={stats['raw_rows']:,} kept={stats['kept']:,} ({kept_pct:.1f}%)")
+    print(f"  [{year}-{month}] raw={stats['raw_rows']:,} kept={stats['kept']:,} ({kept_pct:.1f}%)")
 
 
-def _read_all(name: str) -> pd.DataFrame:
-    parts = [pd.read_parquet(C.PARTIAL_DIR / f"{C.YEAR}-{m}" / name) for m in C.MONTHS]
+def _read_all(year: int, name: str) -> pd.DataFrame:
+    parts = [pd.read_parquet(C.PARTIAL_DIR / f"{year}-{m}" / name) for m in C.MONTHS]
     return pd.concat(parts, ignore_index=True)
 
 
-def combine() -> dict:
-    print("[ingest] combining per-month partials...")
+def combine(year: int = C.PRIMARY_YEAR) -> dict:
+    """Sum the per-month partials for ``year`` into the per-year processed
+    tables. For PRIMARY_YEAR the per-year path helpers resolve to the canonical
+    top-level paths, so the existing single-year tables (and every figure that
+    reads them) are written exactly as before. Other years land under
+    data/processed/by_year/<year>/.
+    """
+    print(f"[ingest] combining per-month partials for {year}...")
 
-    edges = _read_all("edges.parquet")
+    edges = _read_all(year, "edges.parquet")
     edges = edges.groupby(["o", "d", "period"], as_index=False).agg(
         trips=("trips", "sum"), sum_dist=("sum_dist", "sum"),
         sum_fare=("sum_fare", "sum"), sum_dur=("sum_dur", "sum"))
-    edges.to_parquet(C.EDGES_PERIOD_PARQUET, index=False)
+    edges.to_parquet(C.edges_period_path(year), index=False)
 
-    zh_p = _read_all("zh_pickup.parquet").groupby(["zone_id", "weekend", "hr"], as_index=False)["pickups"].sum()
-    zh_d = _read_all("zh_dropoff.parquet").groupby(["zone_id", "weekend", "hr"], as_index=False)["dropoffs"].sum()
+    zh_p = _read_all(year, "zh_pickup.parquet").groupby(["zone_id", "weekend", "hr"], as_index=False)["pickups"].sum()
+    zh_d = _read_all(year, "zh_dropoff.parquet").groupby(["zone_id", "weekend", "hr"], as_index=False)["dropoffs"].sum()
     zh = zh_p.merge(zh_d, on=["zone_id", "weekend", "hr"], how="outer").fillna(0)
     zh[["pickups", "dropoffs"]] = zh[["pickups", "dropoffs"]].astype(int)
-    zh.to_parquet(C.PROCESSED / "zone_hourly.parquet", index=False)
+    zh.to_parquet(C.zone_hourly_path(year), index=False)
 
-    monthly = _read_all("monthly.parquet").groupby("month", as_index=False).sum()
+    monthly = _read_all(year, "monthly.parquet").groupby("month", as_index=False).sum()
     monthly = monthly[monthly["month"].between(1, 12)].sort_values("month")
-    monthly.to_parquet(C.MONTHLY_PARQUET, index=False)
+    monthly.to_parquet(C.monthly_path(year), index=False)
 
-    hw = _read_all("hour_weekday.parquet").groupby(["wd", "hr"], as_index=False)["trips"].sum()
-    hw.to_parquet(C.HOUR_WEEKDAY_PARQUET, index=False)
-
-    ch = _read_all("cost_hist.parquet").groupby(["dur_bin", "fare_bin"], as_index=False)["n"].sum()
-    ch.to_parquet(C.COST_DUR_HIST_PARQUET, index=False)
-
-    sample = _read_all("sample.parquet")
-    sample.to_parquet(C.TRIP_SAMPLE_PARQUET, index=False)
+    hw = _read_all(year, "hour_weekday.parquet").groupby(["wd", "hr"], as_index=False)["trips"].sum()
+    ch = _read_all(year, "cost_hist.parquet").groupby(["dur_bin", "fare_bin"], as_index=False)["n"].sum()
+    sample = _read_all(year, "sample.parquet")
+    # hour_weekday / cost_hist / trip_sample only have canonical top-level paths;
+    # for the primary year we keep writing them. For other years we mirror them
+    # under year_dir so downstream temporal/figure code can read per-year if it
+    # wants, without colliding with the canonical primary-year tables.
+    if year == C.PRIMARY_YEAR:
+        hw.to_parquet(C.HOUR_WEEKDAY_PARQUET, index=False)
+        ch.to_parquet(C.COST_DUR_HIST_PARQUET, index=False)
+        sample.to_parquet(C.TRIP_SAMPLE_PARQUET, index=False)
+    else:
+        d = C.year_dir(year)
+        hw.to_parquet(d / "hour_weekday.parquet", index=False)
+        ch.to_parquet(d / "cost_duration_hist.parquet", index=False)
+        sample.to_parquet(d / "trip_sample.parquet", index=False)
 
     # cleaning stats
-    per_month = {m: json.loads((C.PARTIAL_DIR / f"{C.YEAR}-{m}" / "stats.json").read_text()) for m in C.MONTHS}
+    per_month = {m: json.loads((C.PARTIAL_DIR / f"{year}-{m}" / "stats.json").read_text()) for m in C.MONTHS}
     totals: dict[str, int] = {}
     for d in per_month.values():
         for k, v in d.items():
             totals[k] = totals.get(k, 0) + int(v)
     stats_out = {"per_month": per_month, "totals": totals,
                  "kept_pct": round(100.0 * totals["kept"] / totals["raw_rows"], 3)}
-    C.CLEANING_STATS_JSON.write_text(json.dumps(stats_out, indent=2))
+    C.cleaning_path(year).write_text(json.dumps(stats_out, indent=2))
 
-    print(f"[ingest] total raw rows  : {totals['raw_rows']:,}")
-    print(f"[ingest] total kept trips: {totals['kept']:,} ({stats_out['kept_pct']}%)")
-    print(f"[ingest] distinct OD x daypart edges: {len(edges):,}")
+    print(f"[ingest] [{year}] total raw rows  : {totals['raw_rows']:,}")
+    print(f"[ingest] [{year}] total kept trips: {totals['kept']:,} ({stats_out['kept_pct']}%)")
+    print(f"[ingest] [{year}] distinct OD x daypart edges: {len(edges):,}")
     return stats_out
+
+
+def _year_raw_ready(year: int) -> bool:
+    """True iff ALL 12 raw monthly files for ``year`` are present and valid."""
+    from .download import _valid_parquet
+    return all(_valid_parquet(C.raw_parquet(m, year)) for m in C.MONTHS)
+
+
+def process_year(year: int) -> None:
+    print(f"[ingest] cleaning + aggregating {year} ({len(C.MONTHS)} months, month by month)...")
+    for m in C.MONTHS:
+        process_month(year, m)
+    combine(year)
 
 
 def main() -> None:
     C.PARTIAL_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"[ingest] cleaning + aggregating {len(C.MONTHS)} months (month by month)...")
-    for m in C.MONTHS:
-        process_month(m)
-    combine()
+    ran = []
+    for year in C.YEARS:
+        if not _year_raw_ready(year):
+            print(f"[ingest] NOTE: skipping {year} - not all 12 raw files present/valid.")
+            continue
+        process_year(year)
+        ran.append(year)
+    if not ran:
+        print("[ingest] NOTE: no year had a complete valid raw set; nothing ingested.")
+    else:
+        print(f"[ingest] ingested years: {ran}")
 
 
 if __name__ == "__main__":

@@ -50,6 +50,59 @@ RAW_SCHEMA_JSON = PROCESSED / "raw_schema.json"
 PARTIAL_DIR = PROCESSED / "_partial"  # per-month ingest partials (resumable)
 
 # ---------------------------------------------------------------------------
+# Multi-year layout (2015-2024).
+#
+# PRIMARY_YEAR (2015) keeps writing the canonical top-level paths above, so all
+# existing single-year figures/analysis are untouched. Every other year writes
+# under data/processed/by_year/<year>/. The per-year path helpers below mirror
+# the canonical filenames inside year_dir(year).
+# ---------------------------------------------------------------------------
+YEARS = list(range(2015, 2025))  # 2015..2024 inclusive
+PRIMARY_YEAR = 2015
+
+BY_YEAR = PROCESSED / "by_year"
+
+
+def year_dir(year: int) -> Path:
+    """Return (and create) the per-year processed directory for ``year``."""
+    d = BY_YEAR / str(year)
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+# Per-year path helpers. For PRIMARY_YEAR these intentionally resolve to the
+# canonical top-level paths so the existing tables/figures are reused, not
+# duplicated. For any other year they live under year_dir(year).
+def edges_path(year: int = PRIMARY_YEAR) -> Path:
+    return EDGES_PARQUET if year == PRIMARY_YEAR else year_dir(year) / "edges.parquet"
+
+
+def nodes_path(year: int = PRIMARY_YEAR) -> Path:
+    return NODES_PARQUET if year == PRIMARY_YEAR else year_dir(year) / "nodes.parquet"
+
+
+def edges_period_path(year: int = PRIMARY_YEAR) -> Path:
+    return (EDGES_PERIOD_PARQUET if year == PRIMARY_YEAR
+            else year_dir(year) / "edges_by_period.parquet")
+
+
+def zone_hourly_path(year: int = PRIMARY_YEAR) -> Path:
+    return ((PROCESSED / "zone_hourly.parquet") if year == PRIMARY_YEAR
+            else year_dir(year) / "zone_hourly.parquet")
+
+
+def monthly_path(year: int = PRIMARY_YEAR) -> Path:
+    return MONTHLY_PARQUET if year == PRIMARY_YEAR else year_dir(year) / "monthly_volume.parquet"
+
+
+def cleaning_path(year: int = PRIMARY_YEAR) -> Path:
+    return CLEANING_STATS_JSON if year == PRIMARY_YEAR else year_dir(year) / "cleaning_stats.json"
+
+
+def metrics_path(year: int = PRIMARY_YEAR) -> Path:
+    return METRICS_SUMMARY_JSON if year == PRIMARY_YEAR else year_dir(year) / "metrics_summary.json"
+
+# ---------------------------------------------------------------------------
 # Taxi zones: valid LocationID range. 264 = "Unknown", 265 = "Outside of NYC".
 # ---------------------------------------------------------------------------
 VALID_ZONE_MIN = 1
@@ -64,12 +117,12 @@ TLC_BASE = "https://d37ci6vzurychx.cloudfront.net/trip-data"
 MONTHS = [f"{m:02d}" for m in range(1, 13)]
 
 
-def raw_parquet(month: str) -> Path:
-    return RAW / f"yellow_tripdata_{YEAR}-{month}.parquet"
+def raw_parquet(month: str, year: int = YEAR) -> Path:
+    return RAW / f"yellow_tripdata_{year}-{month}.parquet"
 
 
-def tlc_url(month: str) -> str:
-    return f"{TLC_BASE}/yellow_tripdata_{YEAR}-{month}.parquet"
+def tlc_url(month: str, year: int = YEAR) -> str:
+    return f"{TLC_BASE}/yellow_tripdata_{year}-{month}.parquet"
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +154,23 @@ MAX_TRIP_DISTANCE = 100.0   # miles
 # Graph construction
 # ---------------------------------------------------------------------------
 EDGE_WEIGHT_THRESHOLD = 500  # "frequent" edges: > 500 trips/year (faithful to the original)
+
+# ---------------------------------------------------------------------------
+# Network-diagnostic constants (robustness, scale-free, nulls, cascades).
+# Consumed by the new method modules; kept here as the single edit point.
+# ---------------------------------------------------------------------------
+# Node-removal fractions for percolation/robustness sweeps: 0.0..0.60 step 0.02.
+ROBUSTNESS_FRACTIONS = [round(0.02 * i, 2) for i in range(31)]
+
+# Motter-Lai load tolerance grid (alpha): capacity = (1 + alpha) * initial load.
+CASCADE_TOLERANCES = [0.05, 0.1, 0.2, 0.3, 0.5, 1.0]
+
+# Quantities to run the CSN discrete power-law pipeline on.
+POWERLAW_QUANTITIES = ["out_strength", "in_strength", "total_strength",
+                       "out_degree", "in_degree"]
+
+# Number of null-graph realizations for z-scores / significance bands.
+N_NULL_GRAPHS = 100
 
 # ---------------------------------------------------------------------------
 # NYC county FIPS (for building a federal 11-digit tract GEOID from BoroCode)

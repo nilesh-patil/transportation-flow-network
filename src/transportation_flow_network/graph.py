@@ -18,19 +18,19 @@ import pandas as pd
 from . import common, config as C
 
 
-def build_annual_edges() -> pd.DataFrame:
-    ep = common.load_edges_period()
+def build_annual_edges(year: int = C.PRIMARY_YEAR) -> pd.DataFrame:
+    ep = common.load_edges_period(year)
     annual = ep.groupby(["o", "d"], as_index=False).agg(
         trips=("trips", "sum"), sum_dist=("sum_dist", "sum"),
         sum_fare=("sum_fare", "sum"), sum_dur=("sum_dur", "sum"))
     annual["mean_dist"] = annual["sum_dist"] / annual["trips"]
     annual["mean_fare"] = annual["sum_fare"] / annual["trips"]
     annual["mean_dur"] = annual["sum_dur"] / annual["trips"]
-    annual.to_parquet(C.EDGES_PARQUET, index=False)
+    annual.to_parquet(C.edges_path(year), index=False)
     return annual
 
 
-def build_node_table(annual: pd.DataFrame) -> pd.DataFrame:
+def build_node_table(annual: pd.DataFrame, year: int = C.PRIMARY_YEAR) -> pd.DataFrame:
     no_self = annual[annual["o"] != annual["d"]]
     out = no_self.groupby("o").agg(out_strength=("trips", "sum"),
                                    out_degree=("d", "nunique")).rename_axis("zone_id")
@@ -54,8 +54,38 @@ def build_node_table(annual: pd.DataFrame) -> pd.DataFrame:
     # net-flow index: +1 pure source, -1 pure sink
     denom = (nodes["out_strength"] + nodes["in_strength"]).replace(0, 1)
     nodes["net_flow_index"] = (nodes["out_strength"] - nodes["in_strength"]) / denom
-    nodes.to_parquet(C.NODES_PARQUET, index=False)
+    nodes.to_parquet(C.nodes_path(year), index=False)
     return nodes
+
+
+def build_year(year: int) -> dict:
+    """Build the annual edges + node table for ``year`` and return graph stats.
+
+    For PRIMARY_YEAR this writes the canonical top-level edges.parquet /
+    nodes.parquet (unchanged behavior); other years write under year_dir.
+    Per-year stats are namespaced via common.record_year so the top-level
+    'graph' section is untouched for non-primary years.
+    """
+    annual = build_annual_edges(year)
+    build_node_table(annual, year)
+    no_self = annual[annual["o"] != annual["d"]]
+    total_trips = int(annual["trips"].sum())
+    self_trips = int(annual.loc[annual["o"] == annual["d"], "trips"].sum())
+    filt = no_self[no_self["trips"] > C.EDGE_WEIGHT_THRESHOLD]
+    active_nodes = pd.unique(no_self[["o", "d"]].values.ravel())
+    filt_nodes = pd.unique(filt[["o", "d"]].values.ravel())
+    stats = {
+        "year": year,
+        "total_trips": total_trips,
+        "self_loop_trips": self_trips,
+        "self_loop_share_pct": round(100.0 * self_trips / total_trips, 3),
+        "n_nodes_active": int(len(active_nodes)),
+        "n_edges_full": int(len(no_self)),
+        "edge_weight_threshold": C.EDGE_WEIGHT_THRESHOLD,
+        "n_nodes_filtered": int(len(filt_nodes)),
+        "n_edges_filtered": int(len(filt)),
+    }
+    return stats
 
 
 def main() -> None:
@@ -93,6 +123,19 @@ def main() -> None:
           f"{stats['n_nodes_filtered']} nodes, {stats['n_edges_filtered']:,} edges")
     print(f"[graph] (blog: {C.BLOG_HEADLINE['tract_nodes']} tract nodes, "
           f"{C.BLOG_HEADLINE['top_edges']} top edges - different geography)")
+
+    # Multi-year: build per-year edge + node tables for every other ingested
+    # year (a year is ingested once its period edge list exists). build_year
+    # writes under data/processed/by_year/<year>/ and does not touch the
+    # canonical top-level 'graph' section, so the primary year above is intact.
+    for y in C.YEARS:
+        if y == C.PRIMARY_YEAR:
+            continue
+        if not C.edges_period_path(y).exists():
+            continue
+        ys = build_year(y)
+        print(f"[graph] {y}: {ys['n_nodes_active']} nodes, "
+              f"{ys['n_edges_full']:,} edges, {ys['total_trips']:,} trips")
 
 
 if __name__ == "__main__":
