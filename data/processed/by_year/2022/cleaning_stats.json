@@ -1,0 +1,135 @@
+{
+  "per_month": {
+    "01": {
+      "raw_rows": 2463931,
+      "bad_zone": 43779,
+      "bad_time": 2449,
+      "bad_duration": 32680,
+      "bad_fare": 13893,
+      "bad_distance": 135,
+      "out_of_year": 38,
+      "kept": 2384687
+    },
+    "02": {
+      "raw_rows": 2979431,
+      "bad_zone": 50161,
+      "bad_time": 2776,
+      "bad_duration": 37047,
+      "bad_fare": 16705,
+      "bad_distance": 96,
+      "out_of_year": 9,
+      "kept": 2888280
+    },
+    "03": {
+      "raw_rows": 3627882,
+      "bad_zone": 65685,
+      "bad_time": 3187,
+      "bad_duration": 48196,
+      "bad_fare": 21319,
+      "bad_distance": 117,
+      "out_of_year": 10,
+      "kept": 3508944
+    },
+    "04": {
+      "raw_rows": 3599920,
+      "bad_zone": 65189,
+      "bad_time": 3229,
+      "bad_duration": 50851,
+      "bad_fare": 20507,
+      "bad_distance": 121,
+      "out_of_year": 7,
+      "kept": 3479471
+    },
+    "05": {
+      "raw_rows": 3588295,
+      "bad_zone": 65029,
+      "bad_time": 3030,
+      "bad_duration": 53746,
+      "bad_fare": 22006,
+      "bad_distance": 155,
+      "out_of_year": 15,
+      "kept": 3464713
+    },
+    "06": {
+      "raw_rows": 3558124,
+      "bad_zone": 62415,
+      "bad_time": 2877,
+      "bad_duration": 60165,
+      "bad_fare": 24237,
+      "bad_distance": 132,
+      "out_of_year": 447,
+      "kept": 3429863
+    },
+    "07": {
+      "raw_rows": 3174394,
+      "bad_zone": 64056,
+      "bad_time": 2951,
+      "bad_duration": 49624,
+      "bad_fare": 22806,
+      "bad_distance": 105,
+      "out_of_year": 9,
+      "kept": 3054573
+    },
+    "08": {
+      "raw_rows": 3152677,
+      "bad_zone": 66268,
+      "bad_time": 2427,
+      "bad_duration": 48658,
+      "bad_fare": 23961,
+      "bad_distance": 123,
+      "out_of_year": 8,
+      "kept": 3029201
+    },
+    "09": {
+      "raw_rows": 3183767,
+      "bad_zone": 64436,
+      "bad_time": 1600,
+      "bad_duration": 48433,
+      "bad_fare": 22850,
+      "bad_distance": 134,
+      "out_of_year": 3,
+      "kept": 3062150
+    },
+    "10": {
+      "raw_rows": 3675411,
+      "bad_zone": 76011,
+      "bad_time": 2892,
+      "bad_duration": 58923,
+      "bad_fare": 27716,
+      "bad_distance": 132,
+      "out_of_year": 4,
+      "kept": 3531556
+    },
+    "11": {
+      "raw_rows": 3252717,
+      "bad_zone": 70605,
+      "bad_time": 2950,
+      "bad_duration": 51501,
+      "bad_fare": 25698,
+      "bad_distance": 134,
+      "out_of_year": 6,
+      "kept": 3121028
+    },
+    "12": {
+      "raw_rows": 3399549,
+      "bad_zone": 74011,
+      "bad_time": 1667,
+      "bad_duration": 50932,
+      "bad_fare": 28555,
+      "bad_distance": 145,
+      "out_of_year": 5,
+      "kept": 3260319
+    }
+  },
+  "totals": {
+    "raw_rows": 39656098,
+    "bad_zone": 767645,
+    "bad_time": 32035,
+    "bad_duration": 590756,
+    "bad_fare": 270253,
+    "bad_distance": 1529,
+    "out_of_year": 561,
+    "kept": 38214785
+  },
+  "kept_pct": 96.365
+}
