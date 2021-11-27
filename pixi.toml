@@ -18,11 +18,27 @@ graph    = "python -m transportation_flow_network.graph"
 metrics  = "python -m transportation_flow_network.metrics"
 temporal = "python -m transportation_flow_network.temporal"
 analysis = "python -m transportation_flow_network.analysis"
+# Network-science diagnostic layer (single-year, run after analysis)
+robustness = "python -m transportation_flow_network.robustness"
+scalefree  = "python -m transportation_flow_network.scalefree"
+nullmodels = "python -m transportation_flow_network.nullmodels"
+spatial    = "python -m transportation_flow_network.spatial"
+# Multi-year temporal-evolution panel (records into by_year/<year>)
+evolution  = "python -m transportation_flow_network.evolution"
 figures  = "python -m transportation_flow_network.figures"
 summary  = "python -m transportation_flow_network.summary"
+# Multi-year ingest: loops C.YEARS, skipping any year without a complete raw set.
+ingest-all = "python -m transportation_flow_network.ingest"
 pipeline = { depends-on = [
   "download", "geo", "ingest", "graph",
-  "metrics", "temporal", "analysis", "figures", "summary",
+  "metrics", "temporal", "analysis",
+  "robustness", "scalefree", "nullmodels", "spatial",
+  "figures", "summary",
+] }
+# Multi-year pass: download all years, ingest each complete year, then run the
+# per-year evolution panel and regenerate the (now-populated) evolution figures.
+pipeline-multiyear = { depends-on = [
+  "download", "geo", "ingest-all", "evolution", "figures",
 ] }
 
 [dependencies]

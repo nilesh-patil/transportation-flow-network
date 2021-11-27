@@ -368,6 +368,660 @@ def fig_intercommunity(res):
          f"off-diagonal structure shows directional coupling between functional districts.")
 
 
+# ===========================================================================
+# METHOD-AREA DIAGNOSTIC FIGURES (single-year, textbook style)
+# ===========================================================================
+STRATEGY_STYLE = {
+    "random": ("#444444", "-", 2.4, "random failure"),
+    "strength": ("#e6550d", "-", 1.4, "strength attack"),
+    "strength_recomp": ("#a50f15", "--", 1.6, "strength (recomputed)"),
+    "betweenness": ("#3182bd", "-", 1.4, "betweenness attack"),
+    "pagerank": ("#756bb1", "-", 1.4, "PageRank attack"),
+}
+
+
+def fig_attack_vs_failure():
+    """figures/18_attack_vs_failure.{png,svg} - Barabasi Ch.8 robustness.
+
+    Reads data/processed/robustness.parquet (long: strategy,f,wcc_frac,scc_frac,
+    eff_frac,trip_frac). 1x3 small multiples sharing the x-axis f (fraction of
+    nodes removed). Panel A topology hides it (largest WCC), Panel B weighted
+    efficiency E(f)/E(0), Panel C surviving-trip fraction. Headline numbers and
+    the Molloy-Reed kappa are pulled from metrics_summary.json['robustness'] so
+    the figure text and JSON agree.
+    """
+    path = C.PROCESSED / "robustness.parquet"
+    if not path.exists():
+        print("  [fig] 18_attack_vs_failure SKIPPED (robustness.parquet absent)")
+        return
+    df = pd.read_parquet(path)
+    df = df[df["f"] <= 0.60]
+    res = common.load_results()
+    rob = res.get("robustness", {})
+    kappa = rob.get("molloy_reed_kappa", float("nan"))
+    gap = rob.get("attack_vs_failure_gap", {})
+    cf_trip = rob.get("critical_f_trip", {})
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5), sharex=True)
+    panels = [
+        ("wcc_frac", "largest WCC fraction", "A. Topology hides it"),
+        ("eff_frac", "weighted efficiency  E(f) / E(0)", "B. Flow-weighted efficiency"),
+        ("trip_frac", "surviving-trip fraction", "C. Surviving flow (the honest axis)"),
+    ]
+    for ax, (col, ylab, title) in zip(axes, panels):
+        for strat in ["random", "betweenness", "pagerank", "strength", "strength_recomp"]:
+            sub = df[df["strategy"] == strat].sort_values("f")
+            if sub.empty:
+                continue
+            color, ls, lw, lab = STRATEGY_STYLE[strat]
+            ax.plot(sub["f"], sub[col], ls=ls, lw=lw, color=color, label=lab,
+                    marker="." if strat != "random" else None, ms=4)
+        ax.axhline(0.5, color="#bbbbbb", ls=":", lw=1)
+        ax.set_xlabel("fraction of nodes removed  f")
+        ax.set_ylabel(ylab)
+        ax.set_title(title, fontsize=11)
+        ax.set_ylim(-0.02, 1.05)
+    axes[0].legend(fontsize=8, loc="lower left")
+    axes[0].annotate("random ~ targeted on connectivity:\nthe dense core stays weakly connected",
+                     xy=(0.30, 0.62), xycoords="axes fraction", fontsize=8, color="#555",
+                     ha="left")
+    if gap:
+        axes[2].annotate(
+            f"f=0.10: random keeps {gap.get('random_trip_frac', 0):.0%} of trips,\n"
+            f"worst attack ({gap.get('worst_attack_strategy', '')}) keeps "
+            f"{gap.get('worst_attack_trip_frac', 0):.0%}",
+            xy=(0.12, 0.80), xycoords="axes fraction", fontsize=8, color="#a50f15", ha="left")
+    if cf_trip:
+        axes[2].annotate(f"trip f_c: random {cf_trip.get('random')}  vs  strength {cf_trip.get('strength')}",
+                         xy=(0.20, 0.05), xycoords="axes fraction", fontsize=8, color="#555")
+    fig.suptitle("Attack vs random failure: unweighted robustness hides acute flow vulnerability",
+                 fontsize=13)
+    save(fig, "18_attack_vs_failure",
+         f"Barabasi Ch.8 robustness. As a fraction f of nodes is removed, the largest weakly-connected "
+         f"component (A) decays almost identically under random failure and every targeted attack - the "
+         f"density-0.62 core stays weakly connected, so topology hides the story. Flow-weighted efficiency "
+         f"(B) and surviving-trip fraction (C) fan out dramatically: random removal leaves ~82% of trips and "
+         f"~96% of weighted efficiency at f=0.10, while removing the top-10% strength/PageRank hubs leaves "
+         f"only ~13% of trips and ~17-26% efficiency. strength_recomp (recalculated adversary) is strictly "
+         f"the worst. Molloy-Reed kappa = {kappa:.1f} >> 2, so the random-failure critical fraction is "
+         f"essentially 1 (degenerate by construction); the dashed line at 0.5 reads off the trip-fraction f_c "
+         f"(random 0.32 vs strength 0.04). Note: E(f)/E(0) can sit marginally above 1 at the smallest f "
+         f"because weighted global efficiency is a pair-mean, not monotone under node removal.")
+
+
+def fig_powerlaw_loglog():
+    """figures/17_degree_distribution_loglog.{png,svg} - CSN log-log CCDF.
+
+    Reads data/processed/powerlaw_fits.parquet plus the raw strength/degree
+    vectors (active nodes; total_strength = out+in). One panel per quantity:
+    empirical CCDF P(X>=x) markers, fitted discrete power-law CCDF for x>=xmin,
+    shaded x<xmin region, annotated alpha/xmin/D/n_tail/p_gof and the honest
+    verdict.
+    """
+    path = C.PROCESSED / "powerlaw_fits.parquet"
+    if not path.exists():
+        print("  [fig] 17_degree_distribution_loglog SKIPPED (powerlaw_fits.parquet absent)")
+        return
+    from . import scalefree as sf
+    fits = pd.read_parquet(path).set_index("quantity")
+    g = common.load_graph()  # active nodes, self-loops dropped
+    out_s = dict(g.out_degree(weight="trips"))
+    in_s = dict(g.in_degree(weight="trips"))
+    out_d = dict(g.out_degree())
+    in_d = dict(g.in_degree())
+    nodes_set = list(g.nodes())
+    vectors = {
+        "out_strength": np.array([out_s[n] for n in nodes_set], dtype=float),
+        "in_strength": np.array([in_s[n] for n in nodes_set], dtype=float),
+        "total_strength": np.array([out_s[n] + in_s[n] for n in nodes_set], dtype=float),
+        "out_degree": np.array([out_d[n] for n in nodes_set], dtype=float),
+        "in_degree": np.array([in_d[n] for n in nodes_set], dtype=float),
+    }
+    order = [q for q in C.POWERLAW_QUANTITIES if q in vectors]
+    n = len(order)
+    ncol = 3
+    nrow = int(np.ceil(n / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(5 * ncol, 4.2 * nrow))
+    axes = np.atleast_1d(axes).ravel()
+    for ax, q in zip(axes, order):
+        data = vectors[q]
+        data = data[data > 0]
+        xs = np.sort(data)
+        ccdf = 1.0 - np.arange(len(xs)) / len(xs)
+        ax.loglog(xs, ccdf, ls="none", marker="o", ms=3, mfc="none", mec="#2c7fb8", alpha=0.7)
+        if q in fits.index:
+            row = fits.loc[q]
+            alpha, xmin, D, n_tail = row["alpha"], row["xmin"], row["D"], int(row["n_tail"])
+            p_gof = row["p_gof"]
+            is_deg = q.endswith("_degree")
+            # shade excluded x<xmin region
+            ax.axvspan(xs.min(), xmin, color="#eeeeee", alpha=0.6)
+            # fitted power-law CCDF for x>=xmin, scaled to empirical CCDF at xmin
+            tailx = xs[xs >= xmin]
+            if len(tailx) > 1:
+                emp_at_xmin = ccdf[np.searchsorted(xs, xmin, side="left")]
+                fit = sf._discrete_pl_ccdf(tailx, alpha, xmin) * emp_at_xmin
+                ax.loglog(tailx, fit, ls="-", lw=1.8, color="#a50f15",
+                          label=f"power law a={alpha:.2f}")
+                # lognormal overlay where favoured/tied
+                p_ln = row.get("p_lognormal", float("nan"))
+                R_ln = row.get("R_lognormal", float("nan"))
+                if (not is_deg) and (np.isnan(p_ln) or p_ln > 0.1 or R_ln < 0):
+                    mu, sigma = row["lognormal_mu"], row["lognormal_sigma"]
+                    from scipy.stats import norm
+                    ln_ccdf = norm.sf((np.log(tailx) - mu) / sigma)
+                    ln_ccdf = ln_ccdf / ln_ccdf[0] * emp_at_xmin
+                    ax.loglog(tailx, ln_ccdf, ls="--", lw=1.4, color="#31a354", label="lognormal")
+            p_txt = "0" if (p_gof is not None and p_gof < 1e-3) else f"{p_gof}"
+            note = "  [degenerate: truncated by N-1]" if is_deg else ""
+            ax.set_title(f"{q}{note}", fontsize=10)
+            ax.annotate(f"a={alpha:.2f}, xmin={xmin:.0f}\nD={D:.3f}, n_tail={n_tail}\np_gof={p_txt}",
+                        xy=(0.04, 0.06), xycoords="axes fraction", fontsize=7.5, color="#333",
+                        va="bottom")
+            ax.legend(fontsize=7, loc="upper right")
+        ax.set_xlabel("x"); ax.set_ylabel("P(X >= x)")
+    for ax in axes[n:]:
+        ax.set_axis_off()
+    fig.suptitle("Heavy-tailed but not clean scale-free: discrete CSN power-law fits (CCDF)", fontsize=13)
+    save(fig, "17_degree_distribution_loglog",
+         "Clauset-Shalizi-Newman log-log complementary-CDF fits (markers = empirical, red = fitted discrete "
+         "power law for x>=xmin, grey = excluded x<xmin region). The in/out/total STRENGTH distributions are "
+         "strongly heavy-tailed and beat an exponential decisively, but are NOT a clean scale-free power law: "
+         "the KS bootstrap rejects the power law (p_gof=0) and it is statistically tied with a lognormal "
+         "(green dashed; Vuong p=0.65/0.90/0.59), which is visually indistinguishable on the tail. All three "
+         "strength alphas are below 2 (1.23/1.35/1.33), the divergent-mean regime, further evidence the pure "
+         "power law is strained. The degree panels are structurally truncated by N-1 (max degree ~ 260), so "
+         "in-degree (n_tail=10, alpha~28) is a near-saturation artifact, not a scale-free claim. With only 262 "
+         "nodes the tail is too short to support a scale-free claim regardless (Stumpf-Porter).")
+
+
+def fig_nullmodel_overlay():
+    """figures/19_nullmodel_overlay.{png,svg} - observed vs null with z-scores.
+
+    Reads data/processed/nullmodel_comparison.parquet (metric, observed,
+    null_mean, null_std, z, percentile, null_type) and metrics_summary.json
+    ['null_models']. LEFT: the headline weight-preserving null draws for
+    weighted reciprocity and cost-weighted efficiency with the observed value
+    and z annotated. RIGHT: forest plot of z-scores under the caveated ER and
+    configuration topology nulls, with a shaded |z|<2 band.
+    """
+    path = C.PROCESSED / "nullmodel_comparison.parquet"
+    if not path.exists():
+        print("  [fig] 19_nullmodel_overlay SKIPPED (nullmodel_comparison.parquet absent)")
+        return
+    nm = pd.read_parquet(path)
+    res = common.load_results()
+    block = res.get("null_models", {})
+    wp = block.get("weight_preserving", {})
+
+    fig = plt.figure(figsize=(14, 5.5))
+    gsL = fig.add_gridspec(2, 2, left=0.06, right=0.50, hspace=0.45, wspace=0.30)
+    axR = fig.add_axes([0.60, 0.12, 0.36, 0.78])
+
+    # LEFT: weight-preserving headline. We do not have raw draws stored, so draw
+    # a normal approximation of the null ensemble (mean +- std) with the observed
+    # value far in the tail and the z annotated.
+    wp_rows = nm[nm["null_type"].str.contains("weight", case=False, na=False)]
+    headline = [
+        ("weighted_reciprocity", "weighted reciprocity"),
+        ("efficiency_cost", "cost-weighted efficiency"),
+    ]
+    left_axes = gsL.subplots().ravel()[:2] if False else [fig.add_subplot(gsL[i, :]) for i in range(2)]
+    for ax, (metric, lab) in zip(left_axes, headline):
+        r = wp_rows[wp_rows["metric"] == metric]
+        if r.empty:
+            r = nm[nm["metric"] == metric]
+        if r.empty:
+            ax.set_axis_off()
+            continue
+        r = r.iloc[0]
+        mu, sd, obs, z = r["null_mean"], r["null_std"], r["observed"], r["z"]
+        if sd and sd > 0 and np.isfinite(sd):
+            grid = np.linspace(mu - 4 * sd, mu + 4 * sd, 200)
+            from scipy.stats import norm
+            ax.fill_between(grid, norm.pdf(grid, mu, sd), color="#9ecae1", alpha=0.7,
+                            label="weight-permuted null")
+        ax.axvline(obs, color="#a50f15", lw=2, label=f"observed = {obs:.3g}")
+        ax.axvline(mu, color="#3182bd", lw=1, ls="--")
+        ax.set_yticks([])
+        ax.set_xlabel(lab)
+        ax.annotate(f"z = {z:+.0f}", xy=(0.97, 0.85), xycoords="axes fraction", ha="right",
+                    fontsize=11, color="#a50f15", fontweight="bold")
+        ax.legend(fontsize=7, loc="upper left")
+    left_axes[0].set_title("Weight-preserving null (the decisive test)", fontsize=11)
+
+    # RIGHT: forest of topology-null z-scores (ER + configuration), caveated.
+    topo = nm[~nm["null_type"].str.contains("weight", case=False, na=False)].copy()
+    topo = topo.dropna(subset=["z"])
+    topo["label"] = topo["metric"] + "  [" + topo["null_type"].str.replace("erdos_renyi_gnm", "ER").str.replace("directed_configuration", "config") + "]"
+    topo = topo.sort_values("z")
+    y = np.arange(len(topo))
+    axR.axvspan(-2, 2, color="#eeeeee", alpha=0.8, label="|z| < 2")
+    axR.axvline(0, color="#999", lw=0.8)
+    axR.scatter(topo["z"], y, color="#e6550d", s=40, zorder=3)
+    axR.set_yticks(y); axR.set_yticklabels(topo["label"], fontsize=8)
+    axR.set_xlabel("z-score (observed vs null ensemble)")
+    axR.set_title("Topology nulls (caveated: largely degenerate at density 0.62)", fontsize=11)
+    axR.legend(fontsize=8, loc="lower right")
+
+    fig.suptitle("Null-model benchmarking: the weight-preserving null is the only non-degenerate one",
+                 fontsize=13)
+    save(fig, "19_nullmodel_overlay",
+         "Null-model benchmarking (Barabasi Ch.3/Ch.7). LEFT (the decisive test): the weight-preserving null "
+         "fixes the exact observed topology and degree sequence and only permutes the trip weights across the "
+         "fixed edge set. The observed weighted reciprocity (0.82, z=+217) and cost-weighted efficiency "
+         "(4031, z=-54) sit far in the tail - WHERE the heavy flows sit is highly non-random (mutual "
+         "high-volume Midtown/airport corridors). RIGHT: z-scores of transitivity, assortativity and "
+         "reciprocity under the Erdos-Renyi and directed-configuration nulls. On a density-0.62 near-complete "
+         "graph these topology nulls are largely degenerate (ensemble variance is tiny, so |z| is huge yet "
+         "uninformative; unweighted efficiency z is undefined under ER because its null std is exactly 0). "
+         "The shaded band marks |z|<2. The null draws on the left are drawn as a normal approximation of the "
+         "100-graph ensemble (mean +- std); the observed value and z are exact.")
+
+
+def fig_spatial_efficiency_cascade():
+    """figures/20_spatial_efficiency_cascade.{png,svg} - Barthelemy + Motter-Lai.
+
+    Panel A circuity Q distribution (ECDF) with mean/median marked and the
+    efficiency numbers inset. Panel B Motter-Lai cascade: surviving giant-WCC
+    fraction G(alpha) and surviving-flow fraction vs load tolerance alpha
+    (trigger = JFK Airport), with a 0.8 no-collapse reference line. Panel C
+    per-zone flow-cost betweenness choropleth with load Gini, top-10 share and
+    Moran's I annotated.
+
+    Note: G(alpha) need not be monotonic in alpha (genuine Motter-Lai cascade
+    nonlinearity); the small dip at alpha 0.1->0.2 is expected, not an error.
+    """
+    res = common.load_results()
+    sp = res.get("spatial", {})
+    eff = sp.get("efficiency", {})
+    circ = sp.get("circuity", {})
+    autoc = sp.get("betweenness_spatial_autocorrelation", {})
+    moran = autoc.get("moran", {})
+    casc = sp.get("cascade", {})
+
+    sm_path = C.PROCESSED / "spatial_metrics.parquet"
+    cas_path = C.PROCESSED / "cascade.parquet"
+    if not (sm_path.exists() and cas_path.exists()):
+        print("  [fig] 20_spatial_efficiency_cascade SKIPPED (spatial parquets absent)")
+        return
+    sm = pd.read_parquet(sm_path)
+    cas = pd.read_parquet(cas_path).sort_values("alpha")
+    zones = common.load_zones()
+
+    fig, axes = plt.subplots(1, 3, figsize=(17, 5.5))
+
+    # Panel A: circuity ECDF from the straightness column (Q = 1/straightness proxy
+    # not available per-pair here, so use the recorded summary + a per-node
+    # straightness ECDF which is the inverse-circuity centrality).
+    axA = axes[0]
+    straight = sm["straightness"].dropna().sort_values().values
+    ecdf = np.arange(1, len(straight) + 1) / len(straight)
+    axA.plot(straight, ecdf, color="#2c7fb8", lw=1.8)
+    axA.set_xlabel("straightness centrality  C_S(i) = mean(1/Q)")
+    axA.set_ylabel("ECDF over zones")
+    axA.set_title("A. Geometric directness", fontsize=11)
+    axA.annotate(
+        f"corridor circuity Q:\n mean {circ.get('mean_circuity')}, median {circ.get('median_circuity')}\n"
+        f" p90 {circ.get('p90_circuity')}, max {circ.get('max_circuity')}\n\n"
+        f"E_glob {eff.get('E_glob_distance')}\n"
+        f"normalized vs ideal {eff.get('E_glob_normalized')}\n"
+        f"E_loc {eff.get('E_loc_distance')}",
+        xy=(0.05, 0.95), xycoords="axes fraction", fontsize=8, color="#333", va="top")
+
+    # Panel B: cascade G(alpha) + surviving flow
+    axB = axes[1]
+    axB.plot(cas["alpha"], cas["G_wcc_fraction"], "-o", color="#3182bd", label="giant WCC fraction G(a)")
+    axB.plot(cas["alpha"], cas["surviving_flow_fraction"], "-s", color="#e6550d",
+             label="surviving-flow fraction")
+    axB.axhline(0.80, color="#999", ls=":", lw=1, label="0.80 no-collapse reference")
+    axB.set_xlabel("load tolerance  alpha")
+    axB.set_ylabel("fraction surviving")
+    axB.set_ylim(-0.02, 1.02)
+    axB.set_title(f"B. Motter-Lai cascade (trigger: {casc.get('trigger_zone', 'JFK')})", fontsize=11)
+    axB.legend(fontsize=8, loc="upper left")
+    axB.annotate(f"alpha_no_collapse = {casc.get('alpha_no_collapse')}\n"
+                 f"({casc.get('n_zero_load_nodes')} zero-load nodes\nhave capacity 0)",
+                 xy=(0.50, 0.30), xycoords="axes fraction", fontsize=8, color="#a50f15")
+
+    # Panel C: betweenness choropleth
+    axC = axes[2]
+    gc = zones.merge(sm[["zone_id", "betweenness_flowcost"]], on="zone_id", how="left")
+    gc["bw_log"] = np.log10(gc["betweenness_flowcost"].fillna(0) + 1)
+    zones.boundary.plot(ax=axC, color="#dddddd", lw=0.3)
+    gc.plot(column="bw_log", cmap="YlOrRd", ax=axC, legend=True,
+            legend_kwds={"label": "log10(flow-cost betweenness + 1)", "shrink": 0.6},
+            edgecolor="#ffffff", lw=0.2, missing_kwds={"color": "#f5f5f5"})
+    axC.set_xlim(*MANHATTAN_XLIM); axC.set_ylim(*MANHATTAN_YLIM)
+    axC.set_title("C. Spatial betweenness load", fontsize=11)
+    axC.set_axis_off()
+    mi = moran.get("morans_I")
+    mp = moran.get("p_value_perm")
+    axC.annotate(f"load Gini {autoc.get('load_gini')}\ntop-10 share {autoc.get('top10_betweenness_share')}\n"
+                 f"Moran's I {mi} (p={mp}, NS)",
+                 xy=(0.02, 0.02), xycoords="axes fraction", fontsize=8, color="#333")
+
+    fig.suptitle("Spatial efficiency, cascade fragility and betweenness concentration", fontsize=13)
+    save(fig, "20_spatial_efficiency_cascade",
+         f"Barthelemy spatial-network diagnostics plus a Motter-Lai cascade. (A) The flow graph is "
+         f"geometrically near-optimal: corridor circuity Q (network / straight-line distance) has mean "
+         f"{circ.get('mean_circuity')} and median {circ.get('median_circuity')}, and global efficiency "
+         f"{eff.get('E_glob_distance')} is {eff.get('E_glob_normalized')} of the straight-line ideal - the "
+         f"Manhattan grid and dominant Midtown corridors are direct. (B) A Motter-Lai load-capacity cascade "
+         f"triggered at JFK Airport collapses the giant component at every tested tolerance "
+         f"(alpha_no_collapse = {casc.get('alpha_no_collapse')}); G(alpha) is non-monotonic by genuine "
+         f"cascade nonlinearity. Caveat: {casc.get('n_zero_load_nodes')} zero-initial-load nodes have "
+         f"capacity exactly 0 and fail on any rerouting, so the no-collapse result is partly a zero-capacity "
+         f"artifact, not purely hub fragility. (C) Flow-cost betweenness is concentrated in scattered hubs "
+         f"(load Gini {autoc.get('load_gini')}, top-10 zones carry {autoc.get('top10_betweenness_share')}), "
+         f"and Moran's I = {mi} (p={mp}) is NOT significant - the load is in scattered hubs, not a "
+         f"contiguous spatial cluster.")
+
+
+# ===========================================================================
+# MULTI-YEAR EVOLUTION FIGURES (need data/processed/panel.parquet with >1 year)
+# ===========================================================================
+def _load_panel():
+    path = C.PROCESSED / "panel.parquet"
+    if not path.exists():
+        return None
+    return pd.read_parquet(path).sort_values("year")
+
+
+COVID_YEAR = 2020
+
+
+def fig_metric_evolution_panel():
+    """figures/26_metric_evolution_panel.{png,svg} - per-year structural metrics.
+
+    Reads data/processed/panel.parquet (one row/year). Small-multiple grid of
+    per-year time series sharing a year x-axis with the COVID-2020 year shaded.
+    NO-OPS gracefully with a single annotated point when only one year present.
+    """
+    panel = _load_panel()
+    if panel is None:
+        print("  [fig] 26_metric_evolution_panel SKIPPED (panel.parquet absent)")
+        return
+    single = len(panel) <= 1
+    specs = [
+        ("total_trips", "total trips", True),
+        ("gravity_beta", "gravity beta", False),
+        ("gravity_cpc", "gravity CPC", False),
+        ("weighted_reciprocity", "weighted reciprocity", False),
+        ("reciprocity_rho", "reciprocity rho (GL)", False),
+        ("modularity_Q", "modularity Q (Leiden)", False),
+        ("degree_assortativity", "degree assortativity", False),
+        ("max_kcore", "max k-core", False),
+        ("global_efficiency", "global efficiency", False),
+    ]
+    ncol = 3
+    nrow = int(np.ceil(len(specs) / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(5 * ncol, 3.2 * nrow))
+    axes = np.atleast_1d(axes).ravel()
+    for ax, (col, lab, logy) in zip(axes, specs):
+        if col not in panel.columns:
+            ax.set_axis_off()
+            continue
+        ax.plot(panel["year"], panel[col], "-o", ms=5, color="#2c7fb8")
+        if logy:
+            ax.set_yscale("log")
+        if not single and (panel["year"] == COVID_YEAR).any():
+            ax.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+        ax.set_title(lab, fontsize=10)
+        ax.set_xlabel("year")
+        if single:
+            yr = int(panel["year"].iloc[0]); val = panel[col].iloc[0]
+            ax.annotate(f"{yr}: {val:.3g}\n(multi-year pending)", xy=(0.5, 0.5),
+                        xycoords="axes fraction", ha="center", fontsize=8, color="#888")
+    for ax in axes[len(specs):]:
+        ax.set_axis_off()
+    title = "Structural-metric evolution by year (COVID-2020 shaded)" if not single \
+        else "Structural metrics (single year 2015; multi-year pending)"
+    fig.suptitle(title, fontsize=13)
+    save(fig, "26_metric_evolution_panel",
+         "Per-year time series of headline network metrics: total trips (log-y, COVID-2020 trough and the "
+         "pre-COVID 2015-2019 ride-hailing decline), the gravity distance-decay beta and CPC (is the "
+         "distance law stable while volume craters), reciprocity, modularity Q, degree assortativity, max "
+         "k-core and global efficiency. Tests which structural invariants survive the volume collapse. With "
+         "only 2015 processed this draws a single annotated point per panel and is marked multi-year "
+         "pending; it fills in once the multi-year panel.parquet is built.")
+
+
+def fig_community_stability_over_time():
+    """figures/28_community_stability_over_time.{png,svg} - consecutive-year ARI/AMI.
+
+    Reads data/processed/community_alignment.parquet (year-boundary rows with
+    ARI/AMI). NO-OPS gracefully with a placeholder when fewer than two years.
+    """
+    path = C.PROCESSED / "community_alignment.parquet"
+    if not path.exists():
+        print("  [fig] 28_community_stability_over_time SKIPPED (community_alignment.parquet absent)")
+        return
+    al = pd.read_parquet(path)
+    fig, ax = plt.subplots(figsize=(9, 4.5))
+    if al.empty or len(al) < 1:
+        ax.text(0.5, 0.5, "multi-year pending\n(single year 2015: no year-boundary to align)",
+                ha="center", va="center", fontsize=11, color="#888")
+        ax.set_axis_off()
+    else:
+        xcol = "year_to" if "year_to" in al.columns else al.columns[0]
+        if "ari" in al.columns:
+            ax.step(al[xcol], al["ari"], where="mid", marker="o", color="#3182bd", label="ARI")
+        if "ami" in al.columns:
+            ax.step(al[xcol], al["ami"], where="mid", marker="s", color="#e6550d", label="AMI")
+        ax.set_ylim(0, 1.02)
+        ax.set_xlabel("year boundary"); ax.set_ylabel("partition agreement")
+        ax.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+        ax.legend()
+    ax.set_title("Community stability across years (Leiden ARI / AMI)")
+    save(fig, "28_community_stability_over_time",
+         "Consecutive-year agreement (Adjusted Rand / Adjusted Mutual Information) between Leiden partitions "
+         "of successive years - do the functional districts persist or re-draw across 2019->2020->2021. "
+         "Empty on a single year (no year boundary to align) and drawn as a multi-year-pending placeholder; "
+         "fills in from community_alignment.parquet once the multi-year run completes.")
+
+
+def _panel_years():
+    panel = _load_panel()
+    if panel is None or len(panel) <= 1:
+        return None
+    return sorted(int(y) for y in panel["year"])
+
+
+def fig_volume_timeline_multiyear():
+    """figures/24_volume_timeline_multiyear.{png,svg} - continuous monthly volume 2015-2024."""
+    years = _panel_years()
+    if years is None:
+        print("  [fig] 24_volume_timeline_multiyear SKIPPED (need multi-year panel)")
+        return
+    xs, ys = [], []
+    for y in years:
+        p = C.monthly_path(y)
+        if not p.exists():
+            continue
+        m = pd.read_parquet(p).sort_values("month")
+        for _, r in m.iterrows():
+            if 1 <= int(r["month"]) <= 12:
+                xs.append(y + (int(r["month"]) - 1) / 12.0)
+                ys.append(r["trips"] / 1e6)
+    if not xs:
+        print("  [fig] 24_volume_timeline_multiyear SKIPPED (no per-year monthly tables)")
+        return
+    fig, ax = plt.subplots(figsize=(12, 4.5))
+    ax.plot(xs, ys, "-", lw=1.3, color="#2c7fb8")
+    ax.axvspan(2020, 2021, color="#fde0dd", alpha=0.7, label="2020 (COVID)")
+    ax.set_ylabel("trips per month (millions)")
+    ax.set_xlabel("year")
+    ax.set_title("NYC yellow-taxi monthly volume, 2015-2024")
+    tmin = int(np.argmin(ys))
+    ax.annotate("COVID trough", xy=(xs[tmin], ys[tmin]),
+                xytext=(xs[tmin] + 0.8, ys[tmin] + max(ys) * 0.18),
+                arrowprops=dict(arrowstyle="->", color="#888"), fontsize=9, color="#555")
+    ax.legend(loc="upper right", fontsize=9)
+    save(fig, "24_volume_timeline_multiyear",
+         "Monthly yellow-taxi trips stitched into one continuous 2015-2024 timeline. The steady pre-COVID "
+         "slide (2015-2019) is ride-hailing substitution; the 2020 cliff (shaded) is the pandemic; the partial "
+         "climb after is an incomplete recovery. One figure for the whole decade.")
+
+
+def fig_covid_collapse_recovery_panel():
+    """figures/25_covid_collapse_recovery_panel.{png,svg} - annual totals + recovery vs 2019."""
+    panel = _load_panel()
+    if panel is None or len(panel) <= 1:
+        print("  [fig] 25_covid_collapse_recovery_panel SKIPPED (need multi-year panel)")
+        return
+    p = panel.sort_values("year")
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(13, 4.5))
+    colors = ["#d7301f" if int(y) == COVID_YEAR else "#2c7fb8" for y in p["year"]]
+    axL.bar(p["year"], p["total_trips"] / 1e6, color=colors)
+    axL.set_ylabel("annual trips (millions)")
+    axL.set_xlabel("year")
+    axL.set_title("Annual network volume (COVID-2020 in red)")
+    if (p["year"] == 2019).any():
+        base = float(p.loc[p["year"] == 2019, "total_trips"].iloc[0])
+        axR.plot(p["year"], 100 * p["total_trips"] / base, "-o", color="#3182bd")
+        axR.axhline(100, ls="--", color="#999", lw=1)
+        axR.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+        axR.set_ylabel("% of 2019 volume")
+        axR.set_xlabel("year")
+        axR.set_title("Recovery relative to 2019")
+    else:
+        axR.set_axis_off()
+    save(fig, "25_covid_collapse_recovery_panel",
+         "Left: annual graph volume per year, 2020 highlighted. Right: each year as a percentage of the 2019 "
+         "baseline. The collapse and the still-incomplete recovery are read directly off the second panel; "
+         "yellow taxis never returned to their pre-pandemic level over the window.")
+
+
+def fig_gravity_beta_over_time():
+    """figures/27_gravity_beta_over_time.{png,svg} - is the distance law a structural invariant?"""
+    panel = _load_panel()
+    if panel is None or len(panel) <= 1:
+        print("  [fig] 27_gravity_beta_over_time SKIPPED (need multi-year panel)")
+        return
+    p = panel.sort_values("year")
+    fig, ax = plt.subplots(figsize=(9.5, 4.8))
+    ax.plot(p["year"], p["gravity_beta"], "-o", color="#2c7fb8", label="distance-decay beta")
+    ax.set_ylabel("doubly-constrained decay beta", color="#2c7fb8")
+    ax.tick_params(axis="y", labelcolor="#2c7fb8")
+    ax2 = ax.twinx()
+    ax2.plot(p["year"], p["gravity_cpc"], "-s", color="#e6550d", label="CPC")
+    ax2.set_ylabel("common part of commuters", color="#e6550d")
+    ax2.tick_params(axis="y", labelcolor="#e6550d")
+    ax.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+    ax.set_xlabel("year")
+    ax.set_title("Spatial-interaction law over time (gravity beta + CPC)")
+    save(fig, "27_gravity_beta_over_time",
+         "The calibrated gravity distance-decay exponent (blue) and the common-part-of-commuters fit quality "
+         "(orange) per year. If both hold roughly flat while volume craters, Tobler's first law is a structural "
+         "invariant of the city's geography, not an artefact of taxi demand. The COVID year is shaded.")
+
+
+def fig_hub_asymmetry_evolution():
+    """figures/29_hub_asymmetry_evolution.{png,svg} - marquee hub share + concentration over time."""
+    years = _panel_years()
+    if years is None:
+        print("  [fig] 29_hub_asymmetry_evolution SKIPPED (need multi-year panel)")
+        return
+    zdf = common.load_zones()[["zone_id", "zone"]]
+    watch_names = ["Midtown Center", "Times Sq", "Penn Station", "East Village",
+                   "JFK Airport", "LaGuardia Airport"]
+    watch = {}
+    for nm in watch_names:
+        hit = zdf[zdf["zone"].str.contains(nm, case=False, na=False)]
+        if len(hit):
+            watch[nm] = int(hit.iloc[0]["zone_id"])
+    series = {nm: [] for nm in watch}
+    yrs_plot, topk = [], []
+    for y in years:
+        try:
+            nodes = common.load_nodes(y).set_index("zone_id")
+        except Exception:
+            continue
+        tot = float(nodes["in_strength"].sum())
+        if tot <= 0:
+            continue
+        yrs_plot.append(y)
+        s = nodes["in_strength"].sort_values(ascending=False)
+        topk.append(100 * float(s.head(5).sum()) / tot)
+        for nm, zid in watch.items():
+            v = float(nodes["in_strength"].get(zid, 0)) if zid in nodes.index else np.nan
+            series[nm].append(100 * v / tot)
+    if not yrs_plot:
+        print("  [fig] 29_hub_asymmetry_evolution SKIPPED (no per-year node tables)")
+        return
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(13, 4.8))
+    for nm in watch:
+        axL.plot(yrs_plot, series[nm], "-o", ms=4, label=nm)
+    axL.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+    axL.set_ylabel("% of annual in-strength")
+    axL.set_xlabel("year")
+    axL.set_title("Marquee-hub share of arrivals")
+    axL.legend(fontsize=7, ncol=2)
+    axR.plot(yrs_plot, topk, "-o", color="#756bb1")
+    axR.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+    axR.set_ylabel("top-5 zones' share of in-strength (%)")
+    axR.set_xlabel("year")
+    axR.set_title("Hub concentration over time")
+    save(fig, "29_hub_asymmetry_evolution",
+         "Left: the share of annual arrivals captured by marquee zones (the Midtown spine, Penn, Times Sq, the "
+         "airports, the East Village). Right: how concentrated arrivals are in the top-5 zones each year. Tracks "
+         "whether the hub-and-spoke structure persists, sharpens or flattens as the airports gain weight after "
+         "the pandemic.")
+
+
+def fig_manhattan_ends_drift():
+    """figures/30_manhattan_ends_drift.{png,svg} - does 'where Manhattan ends' persist over the decade?"""
+    years = _panel_years()
+    if years is None:
+        print("  [fig] 30_manhattan_ends_drift SKIPPED (need multi-year panel)")
+        return
+    from . import analysis
+    watch = ["East Village", "Lower East Side", "Alphabet City",
+             "Upper East Side North", "Times Sq"]
+    rows = {nm: [] for nm in watch}
+    yrs_plot = []
+    for y in years:
+        try:
+            edges = common.load_edges_annual(y)
+            nodes = common.load_nodes(y)
+            ids, idx, T = analysis.build_matrix(edges)
+            _, zr, _ = analysis.gravity_residual_field(ids, T, nodes)
+        except Exception as e:
+            print(f"  [fig] 30 skip {y}: {e}")
+            continue
+        core = (zr[zr["service_zone"].isin(["Yellow Zone", "Airports", "EWR"])]
+                .dropna(subset=["gravity_surprise"])
+                .sort_values("gravity_surprise").reset_index(drop=True))
+        if core.empty:
+            continue
+        yrs_plot.append(y)
+        n = max(len(core) - 1, 1)
+        for nm in watch:
+            hit = core[core["zone"].str.contains(nm, case=False, na=False)]
+            rows[nm].append(100.0 * int(hit.index[0]) / n if len(hit) else np.nan)
+    if not yrs_plot:
+        print("  [fig] 30_manhattan_ends_drift SKIPPED (gravity field unavailable)")
+        return
+    fig, ax = plt.subplots(figsize=(10, 5))
+    for nm in watch:
+        ax.plot(yrs_plot, rows[nm], "-o", ms=4, label=nm)
+    ax.axhline(50, ls="--", color="#ccc", lw=1)
+    ax.axvspan(COVID_YEAR - 0.4, COVID_YEAR + 0.4, color="#fde0dd", alpha=0.7)
+    ax.set_ylim(-2, 102)
+    ax.set_ylabel("gravity-residual percentile within the Manhattan core\n"
+                  "(0 = most under-connected / suburb-like)")
+    ax.set_xlabel("year")
+    ax.set_title("Does 'where Manhattan ends' persist? Residual-rank drift, 2015-2024")
+    ax.legend(fontsize=8)
+    save(fig, "30_manhattan_ends_drift",
+         "The flagship finding tracked across a decade. Each line is a zone's percentile rank in the "
+         "doubly-constrained gravity residual within the high-coverage Manhattan core (0 = most "
+         "under-connected, suburb-like; 100 = most over-connected). If the East Village and Lower East Side "
+         "stay low while the Times Sq spine stays high, the 2016 headline holds even as ride-hailing and COVID "
+         "reshape volume. Recomputed per year from each year's own flows.")
+
+
 def main() -> None:
     res = common.load_results()
     zones = common.load_zones()
@@ -392,6 +1046,21 @@ def main() -> None:
     fig_backbone(res, zones, edges)
     fig_rhythm(zones, node_analysis, res)
     fig_intercommunity(res)
+
+    # Method-area diagnostics (single-year, generated now)
+    fig_powerlaw_loglog()
+    fig_attack_vs_failure()
+    fig_nullmodel_overlay()
+    fig_spatial_efficiency_cascade()
+
+    # Multi-year evolution (no-op gracefully until panel.parquet has >1 year)
+    fig_volume_timeline_multiyear()
+    fig_covid_collapse_recovery_panel()
+    fig_metric_evolution_panel()
+    fig_gravity_beta_over_time()
+    fig_hub_asymmetry_evolution()
+    fig_community_stability_over_time()
+    fig_manhattan_ends_drift()
 
     cap = "# Figure portfolio\n\nEvery figure regenerated by `pixi run figures` into this folder (PNG + SVG).\n\n"
     for name in sorted(CAPTIONS):

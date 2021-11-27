@@ -50,3 +50,36 @@ K-means clusters of each zone's 24-hour weekday pickup shape. Commuter-residenti
 ### 16_intercommunity_flow
 Trip shares between Leiden communities. 50% of trips stay within a community; the off-diagonal structure shows directional coupling between functional districts.
 
+### 17_degree_distribution_loglog
+Clauset-Shalizi-Newman log-log complementary-CDF fits (markers = empirical, red = fitted discrete power law for x>=xmin, grey = excluded x<xmin region). The in/out/total STRENGTH distributions are strongly heavy-tailed and beat an exponential decisively, but are NOT a clean scale-free power law: the KS bootstrap rejects the power law (p_gof=0) and it is statistically tied with a lognormal (green dashed; Vuong p=0.65/0.90/0.59), which is visually indistinguishable on the tail. All three strength alphas are below 2 (1.23/1.35/1.33), the divergent-mean regime, further evidence the pure power law is strained. The degree panels are structurally truncated by N-1 (max degree ~ 260), so in-degree (n_tail=10, alpha~28) is a near-saturation artifact, not a scale-free claim. With only 262 nodes the tail is too short to support a scale-free claim regardless (Stumpf-Porter).
+
+### 18_attack_vs_failure
+Barabasi Ch.8 robustness. As a fraction f of nodes is removed, the largest weakly-connected component (A) decays almost identically under random failure and every targeted attack - the density-0.62 core stays weakly connected, so topology hides the story. Flow-weighted efficiency (B) and surviving-trip fraction (C) fan out dramatically: random removal leaves ~82% of trips and ~96% of weighted efficiency at f=0.10, while removing the top-10% strength/PageRank hubs leaves only ~13% of trips and ~17-26% efficiency. strength_recomp (recalculated adversary) is strictly the worst. Molloy-Reed kappa = 365.5 >> 2, so the random-failure critical fraction is essentially 1 (degenerate by construction); the dashed line at 0.5 reads off the trip-fraction f_c (random 0.32 vs strength 0.04). Note: E(f)/E(0) can sit marginally above 1 at the smallest f because weighted global efficiency is a pair-mean, not monotone under node removal.
+
+### 19_nullmodel_overlay
+Null-model benchmarking (Barabasi Ch.3/Ch.7). LEFT (the decisive test): the weight-preserving null fixes the exact observed topology and degree sequence and only permutes the trip weights across the fixed edge set. The observed weighted reciprocity (0.82, z=+217) and cost-weighted efficiency (4031, z=-54) sit far in the tail - WHERE the heavy flows sit is highly non-random (mutual high-volume Midtown/airport corridors). RIGHT: z-scores of transitivity, assortativity and reciprocity under the Erdos-Renyi and directed-configuration nulls. On a density-0.62 near-complete graph these topology nulls are largely degenerate (ensemble variance is tiny, so |z| is huge yet uninformative; unweighted efficiency z is undefined under ER because its null std is exactly 0). The shaded band marks |z|<2. The null draws on the left are drawn as a normal approximation of the 100-graph ensemble (mean +- std); the observed value and z are exact.
+
+### 20_spatial_efficiency_cascade
+Barthelemy spatial-network diagnostics plus a Motter-Lai cascade. (A) The flow graph is geometrically near-optimal: corridor circuity Q (network / straight-line distance) has mean 1.0061 and median 1.0, and global efficiency 0.17291 is 0.9968 of the straight-line ideal - the Manhattan grid and dominant Midtown corridors are direct. (B) A Motter-Lai load-capacity cascade triggered at JFK Airport collapses the giant component at every tested tolerance (alpha_no_collapse = None); G(alpha) is non-monotonic by genuine cascade nonlinearity. Caveat: 149 zero-initial-load nodes have capacity exactly 0 and fail on any rerouting, so the no-collapse result is partly a zero-capacity artifact, not purely hub fragility. (C) Flow-cost betweenness is concentrated in scattered hubs (load Gini 0.8896, top-10 zones carry 0.5469), and Moran's I = 0.0278 (p=0.238) is NOT significant - the load is in scattered hubs, not a contiguous spatial cluster.
+
+### 24_volume_timeline_multiyear
+Monthly yellow-taxi trips stitched into one continuous 2015-2024 timeline. The steady pre-COVID slide (2015-2019) is ride-hailing substitution; the 2020 cliff (shaded) is the pandemic; the partial climb after is an incomplete recovery. One figure for the whole decade.
+
+### 25_covid_collapse_recovery_panel
+Left: annual graph volume per year, 2020 highlighted. Right: each year as a percentage of the 2019 baseline. The collapse and the still-incomplete recovery are read directly off the second panel; yellow taxis never returned to their pre-pandemic level over the window.
+
+### 26_metric_evolution_panel
+Per-year time series of headline network metrics: total trips (log-y, COVID-2020 trough and the pre-COVID 2015-2019 ride-hailing decline), the gravity distance-decay beta and CPC (is the distance law stable while volume craters), reciprocity, modularity Q, degree assortativity, max k-core and global efficiency. Tests which structural invariants survive the volume collapse. With only 2015 processed this draws a single annotated point per panel and is marked multi-year pending; it fills in once the multi-year panel.parquet is built.
+
+### 27_gravity_beta_over_time
+The calibrated gravity distance-decay exponent (blue) and the common-part-of-commuters fit quality (orange) per year. If both hold roughly flat while volume craters, Tobler's first law is a structural invariant of the city's geography, not an artefact of taxi demand. The COVID year is shaded.
+
+### 28_community_stability_over_time
+Consecutive-year agreement (Adjusted Rand / Adjusted Mutual Information) between Leiden partitions of successive years - do the functional districts persist or re-draw across 2019->2020->2021. Empty on a single year (no year boundary to align) and drawn as a multi-year-pending placeholder; fills in from community_alignment.parquet once the multi-year run completes.
+
+### 29_hub_asymmetry_evolution
+Left: the share of annual arrivals captured by marquee zones (the Midtown spine, Penn, Times Sq, the airports, the East Village). Right: how concentrated arrivals are in the top-5 zones each year. Tracks whether the hub-and-spoke structure persists, sharpens or flattens as the airports gain weight after the pandemic.
+
+### 30_manhattan_ends_drift
+The flagship finding tracked across a decade. Each line is a zone's percentile rank in the doubly-constrained gravity residual within the high-coverage Manhattan core (0 = most under-connected, suburb-like; 100 = most over-connected). If the East Village and Lower East Side stay low while the Times Sq spine stays high, the 2016 headline holds even as ride-hailing and COVID reshape volume. Recomputed per year from each year's own flows.
+
