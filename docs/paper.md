@@ -234,6 +234,114 @@ heatmap reproduces the weekday morning commute and weekend late-night bands. The
 "constant-cost band" the original guessed was rounded tips is the JFK flat fare: 92.7%
 of trips in the $49-53 fare band are flat-fare trips (RatecodeID 2, a fixed $52).
 
+### 4.10 Robustness and percolation
+
+We removed nodes in order and tracked four curves against the removed fraction f
+(Barabasi Ch.8): largest weakly- and strongly-connected component fraction, weighted
+global efficiency E(f)/E(0), and surviving-trip fraction. The Molloy-Reed ratio
+kappa = <k^2>/<k> on total degree is 365.5, far above the percolation threshold of 2,
+so the random-failure critical fraction is essentially 1: the density-0.62 graph is
+robust to random failure by construction, and we say so rather than over-reading it.
+
+The honest finding is the gap between unweighted and flow robustness. Removing 10% of
+nodes at random leaves 82% of trips and 96% of weighted efficiency intact; removing the
+top-10% strength or PageRank hubs leaves only about 13% of trips and 17-26% of weighted
+efficiency. The largest-WCC curve hides this completely (random and every targeted
+attack overlap, all decaying slowly) because the dense core stays weakly connected; the
+flow-weighted curves expose acute hub vulnerability. The trip-fraction critical f drops
+from 0.32 under random failure to 0.04 under a strength attack. The recalculated-strength
+adversary (recomputing strengths after each removal, the correct Barabasi adversary) is
+strictly the most damaging at every probed f. This is the hub-and-spoke fragility
+signature: resilience to random shocks masks vulnerability to a coordinated hub strike.
+
+### 4.11 Scale-free testing: heavy-tailed, not scale-free
+
+We fitted discrete power laws (Clauset-Shalizi-Newman MLE with Hurwitz-zeta
+normalization, KS-minimizing x_min, a 1000-replicate semiparametric goodness-of-fit
+bootstrap and Vuong likelihood-ratio tests) to the in-, out- and total-strength
+distributions and, as a topology baseline, to in- and out-degree. The strength tails
+are strongly heavy-tailed and beat an exponential decisively (Vuong R of 157-447, all
+p=0), but they are NOT a clean scale-free power law: the KS bootstrap rejects the power
+law for all three strengths (p_gof=0) and they are statistically tied with a lognormal
+(Vuong p of 0.59-0.90). The fitted strength exponents are 1.23 (out), 1.35 (in) and 1.33
+(total), all below 2, which is the divergent-mean regime and itself evidence the pure
+power law is strained. Degree is structurally truncated by N-1 (max degree near 260), so
+in-degree fits a meaningless near-saturation exponent (n_tail=10, alpha~28) that is an
+artifact, not a claim. With only 262 nodes the tail is too short to support a scale-free
+claim regardless (Stumpf-Porter). The honest verdict: hub-dominated heavy-tailed flow
+concentration, indistinguishable from lognormal, not "scale-free".
+
+### 4.12 Null-model benchmarking
+
+We benchmarked the observed statistics against three nulls (Barabasi Ch.3/Ch.7): an
+Erdos-Renyi G(n,m) at matched density, a directed configuration model preserving the
+in/out-degree sequence, and the scientifically decisive weight-preserving null that
+fixes the exact observed topology and degree sequence and only permutes the trip weights
+across the fixed edge set. On a density-0.62 near-complete graph the topology nulls are
+largely degenerate: the ensemble variance is tiny, so z-scores are huge yet
+uninformative (and unweighted efficiency has zero null variance under ER, so its z is
+undefined), which we report as a finding rather than hide. The weight-preserving null is
+non-degenerate and answers the real question: WHERE the heavy flows sit. Against it the
+observed weighted reciprocity (0.82, z=+217) and cost-weighted efficiency (4031, z=-54)
+sit far in the tail. Heavy taxi flows are organized into mutual high-volume corridors
+(round-trip Midtown-airport and Midtown-downtown spines), not spread randomly over the
+existing edges.
+
+### 4.13 Spatial efficiency and cascades
+
+On the distance-weighted graph (Euclidean centroid miles, EPSG:2263) the flow network is
+geometrically near-optimal in Barthelemy's sense: corridor circuity Q (network over
+straight-line distance) has mean 1.006 and median 1.000, and global efficiency 0.173 is
+0.997 of the straight-line ideal. The Manhattan grid and the dominant Midtown corridors
+are direct. Flow-cost betweenness load is sharply concentrated (Gini 0.89, top-10 zones
+carry 54.7%), and Moran's I on that load is 0.028 (p=0.238), NOT significant: the load
+sits in scattered hubs, not a contiguous spatial cluster, which we report as a clean
+negative result. A Motter-Lai load-capacity cascade (fixed capacity (1+alpha)*load0,
+flow-cost betweenness recomputed each step, synchronous removal) triggered at JFK Airport
+collapses the giant component at every tested tolerance (no alpha avoids collapse).
+G(alpha) is non-monotonic by genuine cascade nonlinearity. We caveat this honestly: 149
+of 259 nodes carry zero initial load, so their capacity is exactly 0 and they fail on any
+rerouting, which means the no-collapse result is partly a zero-capacity artifact of
+peripheral nodes rather than purely hub fragility.
+
+### 4.14 Temporal evolution, 2015 to 2024
+
+The entire diagnostic suite runs per year over the full decade (120 monthly parquet
+files, all ten years), recording a panel (one row per year) plus consecutive-year
+community alignment. The result is a natural experiment: yellow-taxi demand swings
+violently while the network's geometry holds still.
+
+Volume falls 42.4% from 2015 to 2019 (ride-hailing substitution), collapses 70.9% from
+2019 to 2020 (COVID), and recovers to only 48.6% of the 2019 level by 2024. Annual trips
+have a coefficient of variation of 0.61 across the decade. Against that, the structural
+and spatial invariants are nearly flat: global efficiency holds at 0.169 (CV 0.004), the
+gravity common-part-of-commuters at 0.81 (CV 0.007), the distance-decay exponent near 1.1
+to 1.3 (CV 0.064), modularity Q near 0.20 (CV 0.074), and the max k-core near 162
+(CV 0.098). Degree assortativity stays negative throughout (-0.123 to -0.184), so the
+hub-and-spoke topology never dissolves, and the Leiden community count stays at three to
+four. Global efficiency and gravity fit quality are the two most stable quantities in the
+whole project. The spatial-interaction geometry of NYC taxi travel is a structural
+invariant of the city, not a function of fleet size.
+
+The community map is stable across the shock: consecutive-year Leiden alignment averages
+ARI 0.883, and the 2019 to 2020 (COVID) boundary scores ARI 0.943, so the functional
+districts did not re-draw under the collapse. The one real reshuffle is 2015 to 2016
+(ARI 0.536), where the community count moves from three to four. What does change is hub
+composition: the top arrival hub flips from the commercial core (Midtown Center, Murray
+Hill, Times Sq in 2015) to residential Manhattan (Upper East Side North and South lead
+from 2020 on), as commuting and tourism fall away faster than residential trips. The
+flagship "where Manhattan ends" residual is tracked per year (figure
+`30_manhattan_ends_drift`): the East Village drifts further into the under-connected tail
+over the decade, from the 30th to the 13th percentile of the Manhattan core, so the
+suburb-like reading strengthens rather than fades.
+
+Cross-year comparability is itself a limitation: TLC re-coded the trip schema across
+years, the yellow-taxi share of for-hire travel falls steadily as ride-hailing rises, and
+FHV reclassification changes the observation process, so year-over-year deltas conflate a
+real demand change with a changing sample. The invariance results are robust to this (a
+changing sample would, if anything, add noise to the metrics, not hold them constant); the
+volume-level deltas should be read as yellow-taxi-only.
+
 ## 5. Discussion
 
 The through-line is that a flow network lets qualitative urban intuitions be tested.
@@ -260,8 +368,17 @@ observed mean trip distance and report the fit (CPC 0.82) rather than asserting 
 Community counts are resolution and seed dependent, which we characterise rather
 than hide. Distances are straight-line centroid distances, which understate the
 real road, bridge and tunnel cost; the trip-distance variant of the decay fit
-partially addresses this. And the whole analysis is a single year, so it cannot
-separate seasonal effects from the secular growth of ride-hailing.
+partially addresses this. The robustness, cascade and null-model results inherit the
+density caveat: on a near-complete graph topology-only nulls and random-failure
+percolation are nearly degenerate, which is why we lead with the weight-aware versions
+(flow-weighted attack curves, the weight-preserving null) and flag the degenerate ones
+as such. The scale-free fits are limited by 262 nodes (too few for a scale-free claim)
+and the cascade's no-collapse conclusion is partly a zero-capacity artifact of
+peripheral nodes. The single-year baseline cannot separate seasonal effects from the
+secular growth of ride-hailing; the multi-year extension adds its own cross-year
+comparability limits, since TLC re-coded the trip schema across years, the yellow-taxi
+share of for-hire travel falls steadily as ride-hailing and FHV reclassification grow,
+so any year-over-year delta conflates a real demand change with a shifting sample.
 
 ## 7. Reproducibility
 

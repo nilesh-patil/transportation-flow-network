@@ -163,6 +163,153 @@ trips).
   This replaces the original's guess ("rounded tips plus traffic") with a verified
   cause.
 
+## 2a. Network-science diagnostics (measured, full year 2015)
+
+Five textbook diagnostic modules (Barabasi Network Science Ch.4/Ch.8, Barthelemy
+spatial networks, Clauset-Shalizi-Newman, Motter-Lai) run on the 262-node /
+42,347-edge / 135.7M-trip directed weighted graph. Self-loops excluded. All
+numbers below were independently reproduced by an adversarial audit.
+
+### Robustness and percolation (robustness.py, fig 18)
+- Weighted global efficiency at f=0 (flow-cost): E0 = 4030.62.
+- Molloy-Reed kappa = <k^2>/<k> on total degree = 365.5, far above 2, so the
+  random-failure critical fraction is essentially 1: the dense graph is robust to
+  random failure by construction. We report this as a degenerate baseline, not a
+  finding.
+- Schneider R (WCC) ~ 0.70 for every strategy; R (SCC) ~ 0.695-0.699.
+- Attack-vs-failure gap at f=0.10: random removal keeps 82.2% of trips and 96.1%
+  of weighted efficiency; the worst attack (strength_recomp) keeps 13.0% of trips
+  and 17.3% of efficiency. The largest-WCC curve at f=0.10 is ~0.90 for ALL
+  strategies, hiding the gap entirely.
+- Trip-fraction critical f: random 0.32 vs strength / pagerank / strength_recomp
+  0.04, betweenness 0.08. The recalculated-strength adversary is strictly the most
+  damaging at every probed f.
+
+### Scale-free testing (scalefree.py, fig 17)
+Discrete CSN MLE, 1000-replicate goodness-of-fit bootstrap, Vuong tests.
+- out-strength: alpha=1.23, xmin=243, D=0.098, n_tail=222, p_gof=0; lognormal tied
+  (Vuong p=0.65), exponential beaten (R=447, p=0).
+- in-strength: alpha=1.35, xmin=6328, D=0.093, n_tail=217, p_gof=0; lognormal tied
+  (p=0.90).
+- total-strength: alpha=1.33, xmin=6403, D=0.087, n_tail=219, p_gof=0; lognormal
+  tied (p=0.59).
+- out-degree: alpha=2.45, lognormal favoured (R=-74, p=0).
+- in-degree: alpha=27.9, n_tail=10 - a degenerate near-saturation artifact (degree
+  truncated by N-1), NOT a scale-free claim.
+- Verdict: strengths are heavy-tailed and beat an exponential decisively but are
+  NOT a clean scale-free power law (KS rejects, lognormal tied). All three strength
+  alphas are below 2 (divergent-mean regime). 262 nodes cannot support a scale-free
+  claim regardless (Stumpf-Porter).
+
+### Null-model benchmarking (nullmodels.py, fig 19)
+100 null graphs each. Observed: transitivity 0.833, assortativity -0.184,
+GL reciprocity 0.515, weighted reciprocity 0.818, unweighted efficiency 0.808,
+cost efficiency 4030.62.
+- Weight-preserving null (the decisive, non-degenerate one): weighted reciprocity
+  z=+217 (null mean 0.044), cost-weighted efficiency z=-54 (null mean 21605.85).
+  Where the heavy flows sit is highly non-random.
+- Topology nulls (caveated, largely degenerate at density 0.62): ER transitivity
+  z=-17.8, assortativity z=-61.5, GL reciprocity z=+99.5; configuration transitivity
+  z=+72.2, assortativity z=-32.2, GL reciprocity z=+83.2, unweighted efficiency
+  z=+198.5. ER unweighted-efficiency z is undefined (null std exactly 0). The
+  configuration model dropped 30.9% of stubs to self-loop/parallel simplification.
+
+### Spatial efficiency and cascades (spatial.py, fig 20)
+- 259 of 262 nodes have geometry. E_glob (distance) = 0.173, which is 0.997 of the
+  straight-line ideal (Barthelemy); E_loc = 0.221.
+- Circuity Q = network / straight-line distance: mean 1.006, median 1.000, p90
+  1.002, max 23.16 (Oakwood -> Great Kills Park, a sparse Staten Island park).
+  Mean straightness centrality 0.997. The flow graph is geometrically near-optimal.
+- Flow-cost betweenness load Gini 0.89; top-10 zones carry 54.7%. Moran's I = 0.028
+  (expected -0.004, p=0.238) - NOT significant; load is in scattered hubs, not a
+  contiguous cluster.
+- Motter-Lai cascade triggered at JFK Airport collapses the giant component at
+  every tested tolerance (alpha_no_collapse = None). Caveat: 149 of 259 nodes carry
+  zero initial load, so their capacity is exactly 0 and they fail on any rerouting -
+  the no-collapse result is partly a zero-capacity artifact, not purely hub fragility.
+
+## 2b. Multi-year measured numbers (full 2015-2024 yellow-taxi panel)
+
+The evolution module (evolution.py) records a per-year panel into
+`metrics_summary.json['by_year'][<year>]` and `data/processed/panel.parquet` (one
+row per year: nodes, edges, density, total/self trips, mean trip distance, gravity
+beta and CPC, degree assortativity, GL and weighted reciprocity, Leiden modularity
+Q and community count, max k-core, global efficiency, Schneider R, top hubs) plus
+consecutive-year community alignment (ARI/AMI). All ten years (2015-2024) are
+ingested from the 120 monthly parquet files and processed.
+
+| year | nodes | edges | total trips | gravity beta | CPC | weighted recip. | modularity Q | max k-core | global eff. |
+|---|---|---|---|---|---|---|---|---|---|
+| 2015 | 262 | 42,347 | 135,738,831 | 1.146 | 0.816 | 0.818 | 0.184 | 147 | 0.1690 |
+| 2016 | 263 | 41,421 | 121,820,930 | 1.176 | 0.811 | 0.811 | 0.199 | 143 | 0.1682 |
+| 2017 | 263 | 39,752 | 105,019,197 | 1.207 | 0.807 | 0.808 | 0.208 | 138 | 0.1676 |
+| 2018 | 261 | 47,182 | 94,844,805 | 1.207 | 0.806 | 0.807 | 0.212 | 165 | 0.1700 |
+| 2019 | 262 | 50,424 | 78,199,119 | 1.223 | 0.803 | 0.802 | 0.214 | 181 | 0.1685 |
+| 2020 | 261 | 47,661 | 22,772,137 | 1.280 | 0.796 | 0.796 | 0.228 | 171 | 0.1687 |
+| 2021 | 261 | 48,451 | 28,739,686 | 1.124 | 0.804 | 0.791 | 0.199 | 173 | 0.1690 |
+| 2022 | 261 | 42,594 | 36,838,916 | 1.029 | 0.811 | 0.780 | 0.176 | 153 | 0.1683 |
+| 2023 | 261 | 43,986 | 35,521,878 | 1.085 | 0.807 | 0.764 | 0.195 | 161 | 0.1687 |
+| 2024 | 261 | 49,178 | 38,041,717 | 1.116 | 0.803 | 0.783 | 0.206 | 183 | 0.1692 |
+
+### The headline: a 71% demand collapse leaves the network's geometry intact
+
+Trip volume swings violently across the decade (coefficient of variation 0.61):
+a 42.4% secular decline 2015 to 2019 (ride-hailing substitution), then a 70.9%
+collapse 2019 to 2020 (COVID), recovering to only 48.6% of the 2019 level by 2024.
+Yet the structural and spatial invariants barely move:
+
+| quantity | mean | min | max | CV across years |
+|---|---|---|---|---|
+| total trips | 69.7M | 22.8M | 135.7M | **0.608** |
+| global efficiency | 0.1687 | 0.1676 | 0.1700 | **0.004** |
+| gravity CPC | 0.806 | 0.796 | 0.816 | **0.007** |
+| gravity beta | 1.159 | 1.029 | 1.280 | 0.064 |
+| modularity Q | 0.202 | 0.176 | 0.228 | 0.074 |
+| max k-core | 161.5 | 138 | 183 | 0.098 |
+| reciprocity rho | 0.565 | 0.479 | 0.648 | 0.093 |
+| degree assortativity | -0.153 | -0.184 | -0.123 | 0.149 |
+
+Global efficiency (CV 0.004) and gravity-fit quality (CPC, CV 0.007) are the most
+stable quantities measured anywhere in this project. The disassortativity sign
+never flips (the hub-and-spoke topology persists), and the community count stays
+3-4 throughout. The spatial-interaction geometry of NYC taxi travel is a structural
+invariant of the city, not a function of how many cabs are on the road.
+
+### Community map is stable, even across the COVID boundary
+Consecutive-year Leiden alignment (ARI/AMI on shared zones) averages ARI 0.883.
+The 2019 to 2020 boundary, the COVID collapse, scores ARI 0.943: the functional
+districts did not re-draw under the shock. The one genuine reshuffle is 2015 to
+2016 (ARI 0.536), coincident with the community count moving from 3 to 4.
+
+### Hub composition shifts even as the structure holds
+The dominant arrival hub flips from the commercial core to residential Manhattan as
+commuting and tourism fall away:
+- 2015 top-3 in-strength: Midtown Center (5,159,038), Murray Hill (4,394,731),
+  Times Sq/Theatre District (4,348,768).
+- 2019: Midtown Center (3,060,917), Upper East Side North (2,961,071), Upper East
+  Side South (2,804,218).
+- 2020: Upper East Side North (976,160), Upper East Side South (882,297), Midtown
+  Center (797,677).
+- 2024: Upper East Side North (1,581,109), Upper East Side South (1,504,638),
+  Midtown Center (1,429,662).
+
+The Upper East Side overtakes Midtown as the city's top taxi destination from 2020
+on. Figure `29_hub_asymmetry_evolution` tracks the marquee-hub shares; figure
+`30_manhattan_ends_drift` tracks the gravity-residual rank of the East Village and
+Lower East Side across the decade (the East Village drifts further into the
+under-connected tail, from the 30th to the 13th percentile of the core, so the
+"reads like a suburb" finding strengthens over time rather than fading).
+
+### Cross-year data caveats (do not over-read year-over-year deltas)
+- Yellow taxis only, across all years; the yellow share of for-hire travel falls
+  steadily as ride-hailing and green-cab / FHV trips rise.
+- TLC re-coded the trip schema across years (column names, rate codes, location
+  encoding), so the ingest applies a per-year filter; cross-year deltas conflate a
+  real demand change with a changing observation process.
+- The COVID-March-2020 collapse is expected to dominate the volume timeline;
+  separate the secular ride-hailing decline (2015-2019) from the pandemic shock when
+  reading the panel.
+
 ## 3. Divergences from the blog headline figures
 
 | blog figure | blog value | this work | why it differs |

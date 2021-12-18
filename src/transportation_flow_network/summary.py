@@ -49,7 +49,8 @@ def main() -> None:
     print(f"  JFK flat-fare band       : {t['cost_duration']['constant_band_is_jfk_pct']}% of the "
           f"$49-53 band is RatecodeID 2 (the original guessed 'rounded tips')")
     print(line)
-    print(f"  Figures   : {C.FIGURES}  (16 figures, PNG + SVG, see CAPTIONS.md)")
+    n_figs = len(list(C.FIGURES.glob("*.svg")))
+    print(f"  Figures   : {C.FIGURES}  ({n_figs} figures, PNG + SVG, see CAPTIONS.md)")
     print(f"  Numbers   : {C.METRICS_SUMMARY_JSON}")
     print(f"  Notes     : {C.ROOT / 'MODERNIZATION_NOTES.md'}")
     print(f"  Paper     : {C.ROOT / 'docs' / 'paper.md'}")
