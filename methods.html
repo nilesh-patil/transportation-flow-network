@@ -143,6 +143,17 @@
       <figcaption><span class="label">Figure 6.</span> Trip shares between the four Leiden communities. Half of all trips stay within a community; the asymmetric off-diagonal blocks show directional coupling between functional districts.</figcaption>
     </figure>
 
+    <h2 id="network-science">Network-science diagnostics and a longitudinal pass</h2>
+
+    <p>Two layers were added on top of the 2015 graph. The first is a research-grade network-science battery, following standard references so the tests are reproducible rather than ad hoc. Robustness and percolation use the Barabasi <em>Network Science</em> chapter 8 framing: random failure against targeted attack, measured on unweighted connectivity, trips retained, and weighted efficiency, with the Molloy-Reed criterion for the percolation threshold. Scale-free testing follows chapter 4, using the discrete Clauset-Shalizi-Newman maximum-likelihood fit and a likelihood-ratio test against exponential and lognormal alternatives rather than a naive log-log slope. Null-model benchmarking follows chapters 3 and 7: an Erdos-Renyi graph, a configuration model, and a weight-preserving reshuffle, with the last being the only informative null on a near-complete graph. Spatial efficiency uses Barthelemy's circuity and global-efficiency measures and a Moran's I on betweenness, and a Motter-Lai overload cascade tests how a failure at one hub propagates.</p>
+
+    <p>The second layer is longitudinal. The same pipeline runs once per year from 2015 to 2024, recording trips, gravity \(\beta\) and CPC, global efficiency, modularity \(Q\), maximum k-core, degree assortativity, community count, and the consecutive-year Adjusted Rand Index between Leiden partitions. The point is to separate what scales with fleet size from what is a structural invariant of the city. The findings page reads both layers in full; the metric-evolution panel collects the per-year series in one place.</p>
+
+    <figure class="figure-wide">
+      <img src="assets/figures/26_metric_evolution_panel.svg" alt="Small-multiple panel of network metrics from 2015 to 2024: trips, gravity beta and CPC, global efficiency, modularity, k-core, assortativity, and community count." />
+      <figcaption><span class="label">Figure 7.</span> The metric-evolution panel, 2015 to 2024. Trips swing by more than half (CV 0.61) while global efficiency (CV 0.004), gravity CPC (CV 0.007), \(\beta\), modularity \(Q\) and the k-core stay nearly flat and assortativity stays negative throughout. The geometry is a structural invariant of the city, not of the fleet.</figcaption>
+    </figure>
+
     <h2 id="caveat">What the data can and cannot say</h2>
 
     <p>One caveat governs every number above. Yellow taxis over-sample Manhattan and the airports and under-sample the outer boroughs, where for-hire vehicles and the subway carry far more of the load. The most peripheral zones by this measure, Marine Park, Mariners Harbor, Pelham Bay Park, sit near 10 trips per source not because nobody travels there but because few do so by yellow cab. This is a map of yellow-taxi travel, not of all movement.</p>

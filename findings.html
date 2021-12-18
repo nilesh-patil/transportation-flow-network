@@ -131,6 +131,19 @@
     <a href="#day-night">day/night reversal</a> section pulls back out.
   </p>
 
+  <p>
+    Two further layers extend the study beyond 2015. A research-grade network-science pass measures
+    how the graph breaks, whether it is scale-free, and how it compares to null models; a 10-year
+    longitudinal pass tracks the same metrics from 2015 to 2024. The headline numbers from both:
+  </p>
+
+  <div class="statrow">
+    <div class="stat"><span class="value">&minus;70.9%</span><span class="label">2019&ndash;2020 COVID volume collapse</span></div>
+    <div class="stat"><span class="value">0.004</span><span class="label">efficiency CV over 10 years</span></div>
+    <div class="stat"><span class="value">z = +217</span><span class="label">weighted reciprocity vs null</span></div>
+    <div class="stat"><span class="value">13%</span><span class="label">trips left after hub removal</span></div>
+  </div>
+
   <!-- ===================================================================== -->
   <!-- HUB ASYMMETRY                                                          -->
   <!-- ===================================================================== -->
@@ -460,6 +473,211 @@
     $52-$52) and accounts for 2.03% of trips. The full $49-53 constant-cost band is 2.19% of trips,
     and 92.7% of that band is JFK flat-fare travel. The flatness is a tariff, not a measurement
     quirk.
+  </p>
+
+  <!-- ===================================================================== -->
+  <!-- NETWORK SCIENCE                                                        -->
+  <!-- ===================================================================== -->
+  <h2 id="network-science">The network, measured</h2>
+
+  <p>
+    <span class="newthought">A flow graph invites the standard battery of network-science tests.</span>
+    Run them and the answers are sometimes a clean finding and sometimes an honest "no". The four
+    diagnostics below ask how the graph fails under attack, whether it is scale-free, how it stacks
+    up against null models, and how efficiently it routes through real geography. Where the data does
+    not support a headline claim, the verdict says so.
+  </p>
+
+  <h3 id="robustness">Robustness: random failure is survivable, hub removal is not</h3>
+
+  <p>
+    Remove zones at random and the network barely notices: dropping 10% of zones leaves about 82% of
+    trips and roughly 96% of weighted efficiency intact. Remove the top 10% of zones by strength or
+    by PageRank and only about 13% of trips survive, with weighted efficiency falling to between 17%
+    and 26%. The Molloy-Reed criterion puts \(\kappa = 365.5\), so the random-failure percolation
+    threshold is essentially 1: the giant component holds until almost everything is gone. This is a
+    hub-and-spoke network that shrugs off accidents and falls apart under a targeted strike.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/18_attack_vs_failure.svg" alt="Robustness curves comparing random zone failure against targeted hub removal, on unweighted connectivity, trips retained, and weighted efficiency.">
+    <figcaption>
+      <span class="label">Figure 9.</span> Random failure against targeted attack. On the unweighted
+      connectivity curve the two are indistinguishable and the fragility is invisible; only the
+      flow-weighted curves, trips retained and weighted efficiency, reveal that targeting strength or
+      PageRank hubs collapses the network while random removal leaves it almost whole.
+    </figcaption>
+  </figure>
+
+  <h3 id="scale-free">Scale-free testing: heavy-tailed, but not a power law</h3>
+
+  <p>
+    The zone-strength distribution is strongly heavy-tailed and beats an exponential decisively. That
+    is as far as the evidence goes. A discrete Clauset-Shalizi-Newman fit rejects a clean power law
+    and cannot distinguish the tail from a lognormal, and with only 262 zones the tail is too short to
+    support any scale-free claim. The strength power-law exponent estimates land around
+    \(\alpha \approx 1.23\) to \(1.35\), in the divergent-mean regime below 2, which is another reason
+    to be wary of reading a power law into so few points. The honest verdict is heavy-tailed and
+    hub-dominated, not scale-free.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/17_degree_distribution_loglog.svg" alt="Log-log complementary cumulative distribution of zone strength with fitted power-law, lognormal, and exponential candidates.">
+    <figcaption>
+      <span class="label">Figure 10.</span> Zone-strength distribution on log-log axes with candidate
+      fits. The tail crushes the exponential but the power law and the lognormal are statistically
+      indistinguishable, and 262 zones is too short a tail to call. Reported as heavy-tailed, not
+      scale-free.
+    </figcaption>
+  </figure>
+
+  <h3 id="null-models">Null models: topology is uninformative, weight is not</h3>
+
+  <p>
+    The graph is near-complete, with density about 0.66, so the classical topological nulls are
+    degenerate: an Erdos-Renyi graph and a configuration model both reproduce a near-complete graph,
+    and tell us nothing. The informative null is the one that preserves the weight sequence. Against
+    it, weighted reciprocity sits far out in the tail at \(z = +217\): heavy flows are not scattered,
+    they organise into round-trip corridors, Midtown to the airports and Midtown to downtown and back.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/19_nullmodel_overlay.svg" alt="Observed weighted reciprocity overlaid on the distribution from a weight-preserving null model, far in the right tail.">
+    <figcaption>
+      <span class="label">Figure 11.</span> Observed statistics against null-model distributions.
+      The topological nulls collapse because the graph is near-complete; the weight-preserving null is
+      the one that bites, and weighted reciprocity lands \(z = +217\) into its tail.
+    </figcaption>
+  </figure>
+
+  <h3 id="spatial-efficiency">Spatial efficiency and cascades</h3>
+
+  <p>
+    Taxi routes are close to straight lines. The mean circuity is 1.006 and global efficiency reaches
+    99.7% of the straight-line ideal, so the network is about as spatially efficient as geometry
+    allows. Betweenness shows little spatial clustering: Moran's I is small, about 0.028. A Motter-Lai
+    overload cascade triggered at JFK collapses the giant component at every tolerance tested, which
+    sounds dramatic but carries a caveat: 149 of 259 nodes carry zero initial load and therefore zero
+    capacity, so the "no safe tolerance" result is partly a zero-capacity artefact rather than a pure
+    fragility finding.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/20_spatial_efficiency_cascade.svg" alt="Panels of route circuity, spatial autocorrelation of betweenness, and a Motter-Lai cascade triggered at JFK.">
+    <figcaption>
+      <span class="label">Figure 12.</span> Spatial efficiency and the JFK-triggered cascade. Routes
+      are near-straight (mean circuity 1.006, global efficiency 99.7% of ideal) and betweenness is
+      weakly clustered (Moran's I about 0.028). The cascade collapses the giant component at every
+      tolerance, with the zero-capacity caveat noted in the text.
+    </figcaption>
+  </figure>
+
+  <!-- ===================================================================== -->
+  <!-- TEN-YEAR EVOLUTION                                                     -->
+  <!-- ===================================================================== -->
+  <h2 id="evolution">Ten years: a 71% collapse, an invariant geometry</h2>
+
+  <p>
+    <span class="newthought">Run the same pipeline on every year from 2015 to 2024.</span> The
+    fleet shrinks dramatically while its shape barely moves. Yellow-taxi monthly volume falls 42.4%
+    from 2015 to 2019 as ride-hailing substitutes for cabs, collapses 70.9% from 2019 to 2020 under
+    COVID, and recovers to only 48.6% of the 2019 level by 2024. The volume story is one of decline;
+    the structural story is one of near-perfect stability.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/24_volume_timeline_multiyear.svg" alt="Monthly yellow-taxi trip volume from 2015 to 2024, declining through 2019, collapsing in 2020, and partially recovering.">
+    <figcaption>
+      <span class="label">Figure 13.</span> Monthly yellow-taxi volume, 2015 to 2024. A 42.4%
+      ride-hailing-era decline to 2019, a 70.9% COVID collapse in 2020, and a recovery that reaches
+      only 48.6% of the 2019 level by 2024.
+    </figcaption>
+  </figure>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/25_covid_collapse_recovery_panel.svg" alt="Panel detailing the 2019 to 2020 collapse and the partial recovery through 2024.">
+    <figcaption>
+      <span class="label">Figure 14.</span> The collapse and partial recovery in detail. The 2020
+      drop is the sharpest single-year move in the decade, and the post-2020 climb stalls well below
+      the pre-pandemic baseline.
+    </figcaption>
+  </figure>
+
+  <p>
+    Now hold the structure up against the volume. Annual trips have a coefficient of variation of
+    0.61 across the decade, a fleet that changes size by more than half. The geometry does not move
+    with it. Global efficiency has a CV of 0.004 around a mean of 0.169; the gravity-model CPC has a
+    CV of 0.007 around a mean of 0.81; the gravity decay \(\beta\) has a CV of 0.064; modularity \(Q\)
+    a CV of 0.074; the maximum k-core a CV of 0.098. Degree assortativity stays negative throughout,
+    between \(-0.123\) and \(-0.184\), so the hub-and-spoke structure never dissolves, and the
+    community count stays at 3 to 4 every year. The spatial geometry of taxi travel is a structural
+    invariant of the city, not of the fleet.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/27_gravity_beta_over_time.svg" alt="The gravity decay exponent beta plotted per year from 2015 to 2024, nearly flat despite the collapse in volume.">
+    <figcaption>
+      <span class="label">Figure 15.</span> The gravity decay exponent \(\beta\) per year. It barely
+      moves (CV 0.064) while the fleet loses most of its volume, one of several metrics whose
+      near-constant value makes the invariance case.
+    </figcaption>
+  </figure>
+
+  <p>
+    The few things that do change are changes of identity, not of shape. The top arrival hub flips
+    from the commercial core to residential Manhattan: Midtown Center, Murray Hill and Times Square
+    lead in 2015, but the Upper East Side North and South take the top spots from 2020 onward, as
+    work-trip demand fell faster than residential demand.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/29_hub_asymmetry_evolution.svg" alt="The top arrival hub by year, shifting from commercial-core zones in 2015 to Upper East Side residential zones from 2020 on.">
+    <figcaption>
+      <span class="label">Figure 16.</span> The top arrival hub by year. The commercial core leads
+      early; from 2020 the Upper East Side North and South lead, a shift of identity even as the
+      hub-and-spoke shape holds.
+    </figcaption>
+  </figure>
+
+  <p>
+    The "where Manhattan ends" finding does not just survive the decade, it sharpens. Tracking the
+    per-year gravity-residual rank of the flagged zones, the East Village drifts further into the
+    under-connected tail over time, from about the 30th percentile of the Manhattan core down to the
+    13th, so its "reads like a suburb" character strengthens. Times Square stays pinned at the
+    over-connected top and the Upper East Side North at the under-connected bottom.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/30_manhattan_ends_drift.svg" alt="Per-year gravity-residual rank of flagged zones, with the East Village drifting deeper into the under-connected tail over the decade.">
+    <figcaption>
+      <span class="label">Figure 17.</span> Per-year gravity-residual rank of the flagged zones. The
+      East Village drifts from roughly the 30th to the 13th percentile of the core; Times Square stays
+      over-connected at the top and Upper East Side North under-connected at the bottom.
+    </figcaption>
+  </figure>
+
+  <p>
+    The communities are just as durable. Consecutive-year Leiden partitions align at an average
+    Adjusted Rand Index of 0.883, and the 2019 to 2020 COVID boundary scores 0.943: the shock did not
+    re-draw the city's functional districts. The one genuine reshuffle is 2015 to 2016, at ARI 0.536,
+    which sits before the period of steady decline rather than during the pandemic.
+  </p>
+
+  <figure class="figure-wide">
+    <img src="assets/figures/28_community_stability_over_time.svg" alt="Adjusted Rand Index between consecutive-year Leiden community partitions, high throughout including across the COVID boundary.">
+    <figcaption>
+      <span class="label">Figure 18.</span> Consecutive-year Leiden alignment, Adjusted Rand Index.
+      The mean is 0.883 and the 2019 to 2020 COVID boundary scores 0.943; the only real reshuffle is
+      2015 to 2016 (0.536), not the pandemic.
+    </figcaption>
+  </figure>
+
+  <p>
+    Read together, the panel of metrics over time tells one story: the fleet shrank by more than
+    two-thirds, but distance decay, efficiency, hub dominance and community structure held almost
+    perfectly steady. If you want to see all of these at once, the
+    <a href="methods.html#network-science">method page</a> shows the full metric-evolution panel, and the
+    <a href="demo.html">live map</a> still reads the per-zone structure that this decade leaves intact.
   </p>
 
   <!-- ===================================================================== -->

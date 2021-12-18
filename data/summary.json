@@ -561,5 +561,1337 @@
         }
       }
     }
+  },
+  "evolution": {
+    "panel": [
+      {
+        "year": 2015,
+        "n_nodes": 262,
+        "n_edges": 42347,
+        "density": 0.6193,
+        "total_trips": 135738831,
+        "self_trips": 6460370,
+        "mean_trip_distance_mi": 3.071,
+        "gravity_beta": 1.146,
+        "gravity_cpc": 0.816,
+        "degree_assortativity": -0.184,
+        "reciprocity_rho": 0.515,
+        "weighted_reciprocity": 0.818,
+        "modularity_Q": 0.1845,
+        "n_communities": 3,
+        "max_kcore": 147,
+        "global_efficiency": 0.169,
+        "schneider_R_random": 0.5015,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 5159038
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 4394731
+          },
+          {
+            "zone_id": 230,
+            "zone": "Times Sq/Theatre District",
+            "in_strength": 4348768
+          }
+        ]
+      },
+      {
+        "year": 2016,
+        "n_nodes": 263,
+        "n_edges": 41421,
+        "density": 0.6011,
+        "total_trips": 121820930,
+        "self_trips": 5950421,
+        "mean_trip_distance_mi": 3.075,
+        "gravity_beta": 1.176,
+        "gravity_cpc": 0.811,
+        "degree_assortativity": -0.172,
+        "reciprocity_rho": 0.504,
+        "weighted_reciprocity": 0.811,
+        "modularity_Q": 0.1988,
+        "n_communities": 4,
+        "max_kcore": 143,
+        "global_efficiency": 0.1682,
+        "schneider_R_random": 0.5031,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 4596464
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3973497
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 3936812
+          }
+        ]
+      },
+      {
+        "year": 2017,
+        "n_nodes": 263,
+        "n_edges": 39752,
+        "density": 0.5769,
+        "total_trips": 105019197,
+        "self_trips": 5397914,
+        "mean_trip_distance_mi": 3.031,
+        "gravity_beta": 1.207,
+        "gravity_cpc": 0.807,
+        "degree_assortativity": -0.167,
+        "reciprocity_rho": 0.479,
+        "weighted_reciprocity": 0.808,
+        "modularity_Q": 0.2079,
+        "n_communities": 4,
+        "max_kcore": 138,
+        "global_efficiency": 0.1676,
+        "schneider_R_random": 0.5019,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3963522
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3605635
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 3424909
+          }
+        ]
+      },
+      {
+        "year": 2018,
+        "n_nodes": 261,
+        "n_edges": 47182,
+        "density": 0.6953,
+        "total_trips": 94844805,
+        "self_trips": 5043242,
+        "mean_trip_distance_mi": 3.047,
+        "gravity_beta": 1.207,
+        "gravity_cpc": 0.806,
+        "degree_assortativity": -0.163,
+        "reciprocity_rho": 0.569,
+        "weighted_reciprocity": 0.807,
+        "modularity_Q": 0.2116,
+        "n_communities": 4,
+        "max_kcore": 165,
+        "global_efficiency": 0.17,
+        "schneider_R_random": 0.5014,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3677820
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3445056
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 3221387
+          }
+        ]
+      },
+      {
+        "year": 2019,
+        "n_nodes": 262,
+        "n_edges": 50424,
+        "density": 0.7374,
+        "total_trips": 78199119,
+        "self_trips": 4229753,
+        "mean_trip_distance_mi": 3.133,
+        "gravity_beta": 1.223,
+        "gravity_cpc": 0.803,
+        "degree_assortativity": -0.131,
+        "reciprocity_rho": 0.593,
+        "weighted_reciprocity": 0.802,
+        "modularity_Q": 0.2145,
+        "n_communities": 4,
+        "max_kcore": 181,
+        "global_efficiency": 0.1685,
+        "schneider_R_random": 0.4996,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3060917
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 2961071
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 2804218
+          }
+        ]
+      },
+      {
+        "year": 2020,
+        "n_nodes": 261,
+        "n_edges": 47661,
+        "density": 0.7023,
+        "total_trips": 22772137,
+        "self_trips": 1222448,
+        "mean_trip_distance_mi": 2.979,
+        "gravity_beta": 1.28,
+        "gravity_cpc": 0.796,
+        "degree_assortativity": -0.128,
+        "reciprocity_rho": 0.594,
+        "weighted_reciprocity": 0.796,
+        "modularity_Q": 0.228,
+        "n_communities": 4,
+        "max_kcore": 171,
+        "global_efficiency": 0.1687,
+        "schneider_R_random": 0.4976,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 976160
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 882297
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 797677
+          }
+        ]
+      },
+      {
+        "year": 2021,
+        "n_nodes": 261,
+        "n_edges": 48451,
+        "density": 0.714,
+        "total_trips": 28739686,
+        "self_trips": 1206132,
+        "mean_trip_distance_mi": 3.247,
+        "gravity_beta": 1.124,
+        "gravity_cpc": 0.804,
+        "degree_assortativity": -0.128,
+        "reciprocity_rho": 0.61,
+        "weighted_reciprocity": 0.791,
+        "modularity_Q": 0.1985,
+        "n_communities": 3,
+        "max_kcore": 173,
+        "global_efficiency": 0.169,
+        "schneider_R_random": 0.4975,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1274332
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1193477
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 955118
+          }
+        ]
+      },
+      {
+        "year": 2022,
+        "n_nodes": 261,
+        "n_edges": 42594,
+        "density": 0.6277,
+        "total_trips": 36838916,
+        "self_trips": 1375869,
+        "mean_trip_distance_mi": 3.555,
+        "gravity_beta": 1.029,
+        "gravity_cpc": 0.811,
+        "degree_assortativity": -0.171,
+        "reciprocity_rho": 0.551,
+        "weighted_reciprocity": 0.78,
+        "modularity_Q": 0.1758,
+        "n_communities": 4,
+        "max_kcore": 153,
+        "global_efficiency": 0.1683,
+        "schneider_R_random": 0.4974,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1513617
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1423004
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1367740
+          }
+        ]
+      },
+      {
+        "year": 2023,
+        "n_nodes": 261,
+        "n_edges": 43986,
+        "density": 0.6482,
+        "total_trips": 35521878,
+        "self_trips": 1414091,
+        "mean_trip_distance_mi": 3.526,
+        "gravity_beta": 1.085,
+        "gravity_cpc": 0.807,
+        "degree_assortativity": -0.162,
+        "reciprocity_rho": 0.585,
+        "weighted_reciprocity": 0.764,
+        "modularity_Q": 0.1954,
+        "n_communities": 3,
+        "max_kcore": 161,
+        "global_efficiency": 0.1687,
+        "schneider_R_random": 0.4985,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1492371
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1412529
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1392372
+          }
+        ]
+      },
+      {
+        "year": 2024,
+        "n_nodes": 261,
+        "n_edges": 49178,
+        "density": 0.7247,
+        "total_trips": 38041717,
+        "self_trips": 1557978,
+        "mean_trip_distance_mi": 3.437,
+        "gravity_beta": 1.116,
+        "gravity_cpc": 0.803,
+        "degree_assortativity": -0.123,
+        "reciprocity_rho": 0.648,
+        "weighted_reciprocity": 0.783,
+        "modularity_Q": 0.2064,
+        "n_communities": 3,
+        "max_kcore": 183,
+        "global_efficiency": 0.1692,
+        "schneider_R_random": 0.4982,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1581109
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1504638
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1429662
+          }
+        ]
+      }
+    ],
+    "community_alignment": [
+      {
+        "year_from": 2015,
+        "year_to": 2016,
+        "n_shared_zones": 262,
+        "ari": 0.5355,
+        "ami": 0.566
+      },
+      {
+        "year_from": 2016,
+        "year_to": 2017,
+        "n_shared_zones": 263,
+        "ari": 0.946,
+        "ami": 0.8818
+      },
+      {
+        "year_from": 2017,
+        "year_to": 2018,
+        "n_shared_zones": 261,
+        "ari": 0.8658,
+        "ami": 0.8475
+      },
+      {
+        "year_from": 2018,
+        "year_to": 2019,
+        "n_shared_zones": 261,
+        "ari": 0.9119,
+        "ami": 0.8825
+      },
+      {
+        "year_from": 2019,
+        "year_to": 2020,
+        "n_shared_zones": 261,
+        "ari": 0.9433,
+        "ami": 0.8433
+      },
+      {
+        "year_from": 2020,
+        "year_to": 2021,
+        "n_shared_zones": 260,
+        "ari": 0.9362,
+        "ami": 0.8491
+      },
+      {
+        "year_from": 2021,
+        "year_to": 2022,
+        "n_shared_zones": 261,
+        "ari": 0.9165,
+        "ami": 0.7988
+      },
+      {
+        "year_from": 2022,
+        "year_to": 2023,
+        "n_shared_zones": 261,
+        "ari": 0.9045,
+        "ami": 0.7962
+      },
+      {
+        "year_from": 2023,
+        "year_to": 2024,
+        "n_shared_zones": 261,
+        "ari": 0.9855,
+        "ami": 0.9702
+      }
+    ],
+    "story": {
+      "years_processed": [
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "n_years": 10,
+      "volume_change_2015_2019_pct": -42.4,
+      "covid_collapse_2019_2020_pct": -70.9,
+      "recovery_2020_to_2024_pct": 67.1,
+      "volume_vs_2019_at_2024_pct": 48.6,
+      "structural_metric_variation": {
+        "density": {
+          "mean": 0.6647,
+          "cv": 0.0856,
+          "min": 0.5769,
+          "max": 0.7374
+        },
+        "degree_assortativity": {
+          "mean": -0.1529,
+          "cv": 0.1488,
+          "min": -0.184,
+          "max": -0.123
+        },
+        "reciprocity_rho": {
+          "mean": 0.5648,
+          "cv": 0.0929,
+          "min": 0.479,
+          "max": 0.648
+        },
+        "weighted_reciprocity": {
+          "mean": 0.796,
+          "cv": 0.0209,
+          "min": 0.764,
+          "max": 0.818
+        },
+        "modularity_Q": {
+          "mean": 0.2021,
+          "cv": 0.0744,
+          "min": 0.1758,
+          "max": 0.228
+        },
+        "n_communities": {
+          "mean": 3.6,
+          "cv": 0.1434,
+          "min": 3.0,
+          "max": 4.0
+        },
+        "max_kcore": {
+          "mean": 161.5,
+          "cv": 0.098,
+          "min": 138.0,
+          "max": 183.0
+        },
+        "gravity_beta": {
+          "mean": 1.1593,
+          "cv": 0.0638,
+          "min": 1.029,
+          "max": 1.28
+        },
+        "gravity_cpc": {
+          "mean": 0.8064,
+          "cv": 0.0068,
+          "min": 0.796,
+          "max": 0.816
+        },
+        "global_efficiency": {
+          "mean": 0.1687,
+          "cv": 0.0038,
+          "min": 0.1676,
+          "max": 0.17
+        }
+      },
+      "total_trips_cv": 0.6075
+    },
+    "notes": "Per-year diagnostics on the directed/weighted/spatial taxi-flow graph (self-loops excluded). beta/CPC are the doubly-constrained Furness gravity (same definition as analysis.gravity_residual_field). Leiden on the undirected weighted projection. Schneider R is random-failure only (giant SCC, seed-averaged, coarse-stepped) - random failure is near-flat on this dense graph; targeted-attack robustness lives in the single-year robustness module."
+  },
+  "by_year": {
+    "2015": {
+      "evolution": {
+        "year": 2015,
+        "n_nodes": 262,
+        "n_edges": 42347,
+        "density": 0.6193,
+        "total_trips": 135738831,
+        "self_trips": 6460370,
+        "mean_trip_distance_mi": 3.071,
+        "gravity_beta": 1.146,
+        "gravity_cpc": 0.816,
+        "degree_assortativity": -0.184,
+        "reciprocity_rho": 0.515,
+        "weighted_reciprocity": 0.818,
+        "modularity_Q": 0.1845,
+        "n_communities": 3,
+        "max_kcore": 147,
+        "global_efficiency": 0.169,
+        "schneider_R_random": 0.5015,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 5159038
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 4394731
+          },
+          {
+            "zone_id": 230,
+            "zone": "Times Sq/Theatre District",
+            "in_strength": 4348768
+          }
+        ]
+      }
+    },
+    "2016": {
+      "evolution": {
+        "year": 2016,
+        "n_nodes": 263,
+        "n_edges": 41421,
+        "density": 0.6011,
+        "total_trips": 121820930,
+        "self_trips": 5950421,
+        "mean_trip_distance_mi": 3.075,
+        "gravity_beta": 1.176,
+        "gravity_cpc": 0.811,
+        "degree_assortativity": -0.172,
+        "reciprocity_rho": 0.504,
+        "weighted_reciprocity": 0.811,
+        "modularity_Q": 0.1988,
+        "n_communities": 4,
+        "max_kcore": 143,
+        "global_efficiency": 0.1682,
+        "schneider_R_random": 0.5031,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 4596464
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3973497
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 3936812
+          }
+        ]
+      }
+    },
+    "2017": {
+      "evolution": {
+        "year": 2017,
+        "n_nodes": 263,
+        "n_edges": 39752,
+        "density": 0.5769,
+        "total_trips": 105019197,
+        "self_trips": 5397914,
+        "mean_trip_distance_mi": 3.031,
+        "gravity_beta": 1.207,
+        "gravity_cpc": 0.807,
+        "degree_assortativity": -0.167,
+        "reciprocity_rho": 0.479,
+        "weighted_reciprocity": 0.808,
+        "modularity_Q": 0.2079,
+        "n_communities": 4,
+        "max_kcore": 138,
+        "global_efficiency": 0.1676,
+        "schneider_R_random": 0.5019,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3963522
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3605635
+          },
+          {
+            "zone_id": 170,
+            "zone": "Murray Hill",
+            "in_strength": 3424909
+          }
+        ]
+      }
+    },
+    "2018": {
+      "evolution": {
+        "year": 2018,
+        "n_nodes": 261,
+        "n_edges": 47182,
+        "density": 0.6953,
+        "total_trips": 94844805,
+        "self_trips": 5043242,
+        "mean_trip_distance_mi": 3.047,
+        "gravity_beta": 1.207,
+        "gravity_cpc": 0.806,
+        "degree_assortativity": -0.163,
+        "reciprocity_rho": 0.569,
+        "weighted_reciprocity": 0.807,
+        "modularity_Q": 0.2116,
+        "n_communities": 4,
+        "max_kcore": 165,
+        "global_efficiency": 0.17,
+        "schneider_R_random": 0.5014,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3677820
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 3445056
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 3221387
+          }
+        ]
+      }
+    },
+    "2019": {
+      "evolution": {
+        "year": 2019,
+        "n_nodes": 262,
+        "n_edges": 50424,
+        "density": 0.7374,
+        "total_trips": 78199119,
+        "self_trips": 4229753,
+        "mean_trip_distance_mi": 3.133,
+        "gravity_beta": 1.223,
+        "gravity_cpc": 0.803,
+        "degree_assortativity": -0.131,
+        "reciprocity_rho": 0.593,
+        "weighted_reciprocity": 0.802,
+        "modularity_Q": 0.2145,
+        "n_communities": 4,
+        "max_kcore": 181,
+        "global_efficiency": 0.1685,
+        "schneider_R_random": 0.4996,
+        "top_hubs": [
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 3060917
+          },
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 2961071
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 2804218
+          }
+        ]
+      }
+    },
+    "2020": {
+      "evolution": {
+        "year": 2020,
+        "n_nodes": 261,
+        "n_edges": 47661,
+        "density": 0.7023,
+        "total_trips": 22772137,
+        "self_trips": 1222448,
+        "mean_trip_distance_mi": 2.979,
+        "gravity_beta": 1.28,
+        "gravity_cpc": 0.796,
+        "degree_assortativity": -0.128,
+        "reciprocity_rho": 0.594,
+        "weighted_reciprocity": 0.796,
+        "modularity_Q": 0.228,
+        "n_communities": 4,
+        "max_kcore": 171,
+        "global_efficiency": 0.1687,
+        "schneider_R_random": 0.4976,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 976160
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 882297
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 797677
+          }
+        ]
+      }
+    },
+    "2021": {
+      "evolution": {
+        "year": 2021,
+        "n_nodes": 261,
+        "n_edges": 48451,
+        "density": 0.714,
+        "total_trips": 28739686,
+        "self_trips": 1206132,
+        "mean_trip_distance_mi": 3.247,
+        "gravity_beta": 1.124,
+        "gravity_cpc": 0.804,
+        "degree_assortativity": -0.128,
+        "reciprocity_rho": 0.61,
+        "weighted_reciprocity": 0.791,
+        "modularity_Q": 0.1985,
+        "n_communities": 3,
+        "max_kcore": 173,
+        "global_efficiency": 0.169,
+        "schneider_R_random": 0.4975,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1274332
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1193477
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 955118
+          }
+        ]
+      }
+    },
+    "2022": {
+      "evolution": {
+        "year": 2022,
+        "n_nodes": 261,
+        "n_edges": 42594,
+        "density": 0.6277,
+        "total_trips": 36838916,
+        "self_trips": 1375869,
+        "mean_trip_distance_mi": 3.555,
+        "gravity_beta": 1.029,
+        "gravity_cpc": 0.811,
+        "degree_assortativity": -0.171,
+        "reciprocity_rho": 0.551,
+        "weighted_reciprocity": 0.78,
+        "modularity_Q": 0.1758,
+        "n_communities": 4,
+        "max_kcore": 153,
+        "global_efficiency": 0.1683,
+        "schneider_R_random": 0.4974,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1513617
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1423004
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1367740
+          }
+        ]
+      }
+    },
+    "2023": {
+      "evolution": {
+        "year": 2023,
+        "n_nodes": 261,
+        "n_edges": 43986,
+        "density": 0.6482,
+        "total_trips": 35521878,
+        "self_trips": 1414091,
+        "mean_trip_distance_mi": 3.526,
+        "gravity_beta": 1.085,
+        "gravity_cpc": 0.807,
+        "degree_assortativity": -0.162,
+        "reciprocity_rho": 0.585,
+        "weighted_reciprocity": 0.764,
+        "modularity_Q": 0.1954,
+        "n_communities": 3,
+        "max_kcore": 161,
+        "global_efficiency": 0.1687,
+        "schneider_R_random": 0.4985,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1492371
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1412529
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1392372
+          }
+        ]
+      }
+    },
+    "2024": {
+      "evolution": {
+        "year": 2024,
+        "n_nodes": 261,
+        "n_edges": 49178,
+        "density": 0.7247,
+        "total_trips": 38041717,
+        "self_trips": 1557978,
+        "mean_trip_distance_mi": 3.437,
+        "gravity_beta": 1.116,
+        "gravity_cpc": 0.803,
+        "degree_assortativity": -0.123,
+        "reciprocity_rho": 0.648,
+        "weighted_reciprocity": 0.783,
+        "modularity_Q": 0.2064,
+        "n_communities": 3,
+        "max_kcore": 183,
+        "global_efficiency": 0.1692,
+        "schneider_R_random": 0.4982,
+        "top_hubs": [
+          {
+            "zone_id": 236,
+            "zone": "Upper East Side North",
+            "in_strength": 1581109
+          },
+          {
+            "zone_id": 237,
+            "zone": "Upper East Side South",
+            "in_strength": 1504638
+          },
+          {
+            "zone_id": 161,
+            "zone": "Midtown Center",
+            "in_strength": 1429662
+          }
+        ]
+      }
+    }
+  },
+  "scalefree": {
+    "out_strength": {
+      "quantity": "out_strength",
+      "n": 262,
+      "alpha": 1.2299,
+      "alpha_continuous": 1.2299,
+      "xmin": 243.0,
+      "D": 0.0984,
+      "n_tail": 222,
+      "p_gof": 0.0,
+      "powerlaw_plausible": false,
+      "R_lognormal": 4.4864,
+      "V_lognormal": 0.4544,
+      "p_lognormal": 0.6495,
+      "R_exponential": 446.8475,
+      "V_exponential": 10.992,
+      "p_exponential": 0.0,
+      "LR_truncated": 60.708,
+      "p_truncated": 0.0,
+      "lognormal_mu": 9.8403,
+      "lognormal_sigma": 3.1972,
+      "verdict": "power law REJECTED by KS bootstrap (p_gof=0.000); power law NOT distinguishable from lognormal (Vuong p=0.650); CAVEAT alpha=1.23 < 2 (divergent-mean regime, pure power law strained)"
+    },
+    "in_strength": {
+      "quantity": "in_strength",
+      "n": 262,
+      "alpha": 1.3544,
+      "alpha_continuous": 1.3544,
+      "xmin": 6328.0,
+      "D": 0.0934,
+      "n_tail": 217,
+      "p_gof": 0.0,
+      "powerlaw_plausible": false,
+      "R_lognormal": -1.1377,
+      "V_lognormal": -0.1226,
+      "p_lognormal": 0.9024,
+      "R_exponential": 156.9849,
+      "V_exponential": 6.5607,
+      "p_exponential": 0.0,
+      "LR_truncated": 53.2433,
+      "p_truncated": 0.0,
+      "lognormal_mu": 11.5746,
+      "lognormal_sigma": 2.0066,
+      "verdict": "power law REJECTED by KS bootstrap (p_gof=0.000); power law NOT distinguishable from lognormal (Vuong p=0.902); CAVEAT alpha=1.35 < 2 (divergent-mean regime, pure power law strained)"
+    },
+    "total_strength": {
+      "quantity": "total_strength",
+      "n": 262,
+      "alpha": 1.3253,
+      "alpha_continuous": 1.3253,
+      "xmin": 6403.0,
+      "D": 0.087,
+      "n_tail": 219,
+      "p_gof": 0.0,
+      "powerlaw_plausible": false,
+      "R_lognormal": 4.9367,
+      "V_lognormal": 0.532,
+      "p_lognormal": 0.5947,
+      "R_exponential": 232.9854,
+      "V_exponential": 8.5402,
+      "p_exponential": 0.0,
+      "LR_truncated": 48.5804,
+      "p_truncated": 0.0,
+      "lognormal_mu": 11.8381,
+      "lognormal_sigma": 2.266,
+      "verdict": "power law REJECTED by KS bootstrap (p_gof=0.000); power law NOT distinguishable from lognormal (Vuong p=0.595); CAVEAT alpha=1.33 < 2 (divergent-mean regime, pure power law strained)"
+    },
+    "out_degree": {
+      "quantity": "out_degree",
+      "n": 262,
+      "alpha": 2.4493,
+      "alpha_continuous": 2.4492,
+      "xmin": 93.0,
+      "D": 0.2194,
+      "n_tail": 205,
+      "p_gof": 0.0,
+      "powerlaw_plausible": false,
+      "R_lognormal": -74.1173,
+      "V_lognormal": -6.2518,
+      "p_lognormal": 0.0,
+      "R_exponential": -47.2856,
+      "V_exponential": -13.4364,
+      "p_exponential": 0.0,
+      "LR_truncated": 94.5683,
+      "p_truncated": 0.0,
+      "lognormal_mu": 5.2172,
+      "lognormal_sigma": 0.3215,
+      "verdict": "power law REJECTED by KS bootstrap (p_gof=0.000); lognormal favoured over power law (R=-74.1, p=0.000)"
+    },
+    "in_degree": {
+      "quantity": "in_degree",
+      "n": 262,
+      "alpha": 27.9154,
+      "alpha_continuous": 27.8814,
+      "xmin": 221.0,
+      "D": 0.0599,
+      "n_tail": 10,
+      "p_gof": 0.998,
+      "powerlaw_plausible": true,
+      "R_lognormal": 1.866,
+      "V_lognormal": 0.9805,
+      "p_lognormal": 0.3268,
+      "R_exponential": 0.0013,
+      "V_exponential": 0.0061,
+      "p_exponential": 0.9951,
+      "LR_truncated": 0.0307,
+      "p_truncated": 0.861,
+      "lognormal_mu": 5.4331,
+      "lognormal_sigma": 0.0351,
+      "verdict": "power law plausible (p_gof=0.998); power law NOT distinguishable from lognormal (Vuong p=0.327)"
+    },
+    "_meta": {
+      "n_bootstrap": 1000,
+      "method": "Clauset-Shalizi-Newman discrete MLE; Vuong LR vs lognormal/exponential; nested LR vs truncated PL",
+      "powerlaw_package_available": false,
+      "n_nodes": 262,
+      "note": "Strength distributions are the scientifically central quantities; degree distributions are structurally truncated by N-1 so a clean power law is impossible there. Short tail (262 nodes) limits power to distinguish power law from lognormal."
+    }
+  },
+  "null_models": {
+    "graph": {
+      "nodes": 262,
+      "edges": 42347,
+      "density": 0.6193
+    },
+    "n_null_graphs": 100,
+    "observed": {
+      "transitivity": 0.83302,
+      "assortativity": -0.184,
+      "reciprocity_gl": 0.51491,
+      "weighted_reciprocity": 0.81752,
+      "efficiency_unweighted": 0.808,
+      "efficiency_cost": 4030.62128
+    },
+    "erdos_renyi": {
+      "transitivity": {
+        "observed": 0.83302,
+        "null_mean": 0.8548,
+        "null_std": 0.00123,
+        "z": -17.772,
+        "percentile": 0.0
+      },
+      "assortativity": {
+        "observed": -0.184,
+        "null_mean": -0.00328,
+        "null_std": 0.00294,
+        "z": -61.447,
+        "percentile": 0.0
+      },
+      "reciprocity_gl": {
+        "observed": 0.51491,
+        "null_mean": 0.00098,
+        "null_std": 0.00516,
+        "z": 99.517,
+        "percentile": 1.0
+      },
+      "efficiency_unweighted": {
+        "observed": 0.808,
+        "null_mean": 0.80964,
+        "null_std": 0.0,
+        "z": null,
+        "percentile": 0.0
+      }
+    },
+    "configuration": {
+      "transitivity": {
+        "observed": 0.83302,
+        "null_mean": 0.71626,
+        "null_std": 0.00162,
+        "z": 72.157,
+        "percentile": 1.0
+      },
+      "assortativity": {
+        "observed": -0.184,
+        "null_mean": -0.02871,
+        "null_std": 0.00482,
+        "z": -32.22,
+        "percentile": 0.0
+      },
+      "reciprocity_gl": {
+        "observed": 0.51491,
+        "null_mean": 0.10651,
+        "null_std": 0.00491,
+        "z": 83.214,
+        "percentile": 1.0
+      },
+      "efficiency_unweighted": {
+        "observed": 0.808,
+        "null_mean": 0.71293,
+        "null_std": 0.00048,
+        "z": 198.519,
+        "percentile": 1.0
+      }
+    },
+    "configuration_meta": {
+      "observed_edges": 42347,
+      "simplified_null_edges_mean": 29275.0,
+      "edge_loss_pct_to_simplification": 30.87
+    },
+    "weight_preserving": {
+      "weighted_reciprocity": {
+        "observed": 0.81752,
+        "null_mean": 0.04361,
+        "null_std": 0.00356,
+        "z": 217.18,
+        "percentile": 1.0
+      },
+      "efficiency_cost": {
+        "observed": 4030.62128,
+        "null_mean": 21605.85284,
+        "null_std": 325.21947,
+        "z": -54.041,
+        "percentile": 0.0
+      }
+    },
+    "degeneracy_note": "At density 0.62 the observed topology is near-complete, so the ER and directed-configuration nulls reproduce observed transitivity and the near-zero assortativity almost exactly - their z-scores are uninformative (transitivity is structurally forced; assortativity hovers at 0). The WEIGHT-PRESERVING null is the decisive comparison: topology and degrees are held exactly, only the weight-topology coupling is destroyed, so a nonzero z on weighted reciprocity / cost-weighted efficiency reports genuine flow/spatial organisation (heavy flows sit on mutual high-volume corridors), not a topological artefact."
+  },
+  "spatial": {
+    "n_nodes": 262,
+    "n_edges": 42347,
+    "n_nodes_without_geometry": 3,
+    "efficiency": {
+      "n_nodes_geo": 259,
+      "E_glob_distance": 0.17291,
+      "E_glob_ideal_complete_spatial": 0.17347,
+      "E_glob_normalized": 0.9968,
+      "E_loc_distance": 0.22077,
+      "E_glob_flowcost": 4122.269858,
+      "note": "distance weight = Euclidean miles between EPSG:2263 centroids; ideal = complete graph with straight-line edges (Barthelemy); flow-cost weight = 1/trips."
+    },
+    "circuity": {
+      "n_pairs": 66822,
+      "mean_circuity": 1.0061,
+      "median_circuity": 1.0,
+      "p90_circuity": 1.002,
+      "max_circuity": 23.156,
+      "mean_straightness_centrality": 0.9968,
+      "most_circuitous_corridors": [
+        {
+          "o": "Oakwood",
+          "d": "Great Kills Park",
+          "circuity": 23.156,
+          "straight_mi": 1.16
+        },
+        {
+          "o": "Great Kills",
+          "d": "Great Kills Park",
+          "circuity": 22.63,
+          "straight_mi": 1.26
+        },
+        {
+          "o": "New Dorp/Midland Beach",
+          "d": "Great Kills Park",
+          "circuity": 11.857,
+          "straight_mi": 2.17
+        },
+        {
+          "o": "Arden Heights",
+          "d": "Great Kills Park",
+          "circuity": 9.217,
+          "straight_mi": 3.2
+        },
+        {
+          "o": "Eltingville/Annadale/Prince's Bay",
+          "d": "Great Kills Park",
+          "circuity": 9.188,
+          "straight_mi": 3.34
+        },
+        {
+          "o": "Heartland Village/Todt Hill",
+          "d": "Great Kills Park",
+          "circuity": 9.122,
+          "straight_mi": 2.82
+        },
+        {
+          "o": "Freshkills Park",
+          "d": "Great Kills Park",
+          "circuity": 7.887,
+          "straight_mi": 3.73
+        },
+        {
+          "o": "Rossville/Woodrow",
+          "d": "Great Kills Park",
+          "circuity": 7.339,
+          "straight_mi": 4.2
+        }
+      ],
+      "note": "Q = network shortest-path distance / straight-line distance (>=1); corridors filtered to straight-line >= 0.5 mi so tiny adjacent pairs do not dominate the ratio."
+    },
+    "betweenness_spatial_autocorrelation": {
+      "load_gini": 0.8896,
+      "top10_betweenness_share": 0.5469,
+      "moran": {
+        "morans_I": 0.0278,
+        "expected_I": -0.00388,
+        "p_value_perm": 0.238,
+        "n_permutations": 999,
+        "k_neighbours": 6
+      }
+    },
+    "cascade": {
+      "trigger_node": 132,
+      "trigger_zone": "JFK Airport",
+      "trigger_load_rank": "highest flow-cost betweenness",
+      "load_gini": 0.8896,
+      "n_zero_load_nodes": 149,
+      "tolerances": [
+        0.05,
+        0.1,
+        0.2,
+        0.3,
+        0.5,
+        1.0
+      ],
+      "G_alpha_curve": [
+        {
+          "alpha": 0.05,
+          "G": 0.2548,
+          "cascade_fraction": 0.7413,
+          "surviving_flow_fraction": 0.008
+        },
+        {
+          "alpha": 0.1,
+          "G": 0.2934,
+          "cascade_fraction": 0.7027,
+          "surviving_flow_fraction": 0.0081
+        },
+        {
+          "alpha": 0.2,
+          "G": 0.2819,
+          "cascade_fraction": 0.7143,
+          "surviving_flow_fraction": 0.0087
+        },
+        {
+          "alpha": 0.3,
+          "G": 0.4981,
+          "cascade_fraction": 0.5019,
+          "surviving_flow_fraction": 0.0651
+        },
+        {
+          "alpha": 0.5,
+          "G": 0.5444,
+          "cascade_fraction": 0.4556,
+          "surviving_flow_fraction": 0.1137
+        },
+        {
+          "alpha": 1.0,
+          "G": 0.7722,
+          "cascade_fraction": 0.2278,
+          "surviving_flow_fraction": 0.2015
+        }
+      ],
+      "alpha_no_collapse": null,
+      "no_collapse_criterion": "smallest alpha with surviving giant WCC >= 0.80 N0",
+      "note": "synchronous update; capacity fixed at (1+alpha)*load0; load = unnormalized flow-cost betweenness recomputed each step. Most nodes carry ~0 load (see load_gini / n_zero_load_nodes) so the cascade is hub-driven. Failed nodes labelled injector/absorber by net_flow_index sign (Peterson-Rajan). CAVEAT: the n_zero_load_nodes zero-initial-load nodes have capacity exactly (1+alpha)*0 = 0, so the moment any flow reroutes through one post-trigger it overloads and fails on any alpha; the 'alpha_no_collapse=None' conclusion is therefore partly a zero-capacity artifact of peripheral nodes, not purely hub fragility."
+    }
+  },
+  "robustness": {
+    "n_nodes": 262,
+    "n_edges": 42347,
+    "total_trips": 135738831.0,
+    "efficiency_E0": 4030.621281741512,
+    "molloy_reed_kappa": 365.45283018867923,
+    "n_random_seeds": 100,
+    "n_random_seeds_efficiency": 20,
+    "fractions": [
+      0.0,
+      0.02,
+      0.04,
+      0.06,
+      0.08,
+      0.1,
+      0.12,
+      0.14,
+      0.16,
+      0.18,
+      0.2,
+      0.22,
+      0.24,
+      0.26,
+      0.28,
+      0.3,
+      0.32,
+      0.34,
+      0.36,
+      0.38,
+      0.4,
+      0.42,
+      0.44,
+      0.46,
+      0.48,
+      0.5,
+      0.52,
+      0.54,
+      0.56,
+      0.58,
+      0.6
+    ],
+    "schneider_R_wcc": {
+      "random": 0.6999507510465404,
+      "strength": 0.7000738734301895,
+      "strength_recomp": 0.7000738734301895,
+      "betweenness": 0.6992120167446442,
+      "pagerank": 0.7000738734301895
+    },
+    "schneider_R_scc": {
+      "random": 0.698640728884511,
+      "strength": 0.6947796109332676,
+      "strength_recomp": 0.6953952228515143,
+      "betweenness": 0.6951489780842157,
+      "pagerank": 0.6960108347697611
+    },
+    "critical_f_wcc": {
+      "random": 0.5,
+      "strength": 0.52,
+      "strength_recomp": 0.52,
+      "betweenness": 0.52,
+      "pagerank": 0.52
+    },
+    "critical_f_trip": {
+      "random": 0.32,
+      "strength": 0.04,
+      "strength_recomp": 0.04,
+      "betweenness": 0.08,
+      "pagerank": 0.04
+    },
+    "attack_vs_failure_gap": {
+      "probe_fraction": 0.1,
+      "random_trip_frac": 0.8221799081207647,
+      "worst_attack_strategy": "strength_recomp",
+      "worst_attack_trip_frac": 0.12977328499314983,
+      "trip_frac_gap": 0.6924066231276149,
+      "random_eff_frac": 0.9606312306639591,
+      "worst_attack_eff_frac": 0.1733959960768358
+    },
+    "recompute_note": "strength attack run both static and recomputed; betweenness/pagerank static only (all-pairs betweenness per step is the sole costly piece).",
+    "weighting_note": "efficiency uses weight=cost=1/trips (flow-resistance Dijkstra); trip_frac counts trips inside the giant WCC."
   }
 }
