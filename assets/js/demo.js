@@ -52,9 +52,13 @@
   };
 
   // ---- state ---------------------------------------------------------------
-  var state = { metric: "gravity", period: "evening" };
+  var state = { metric: "gravity", period: "evening", year: "2015" };
   var geoLayer = null, edgeLayer = null, zonesData = null, edgesData = null;
   var edgeMax = 1;
+  var YEARS = [];                       // year axis, filled from the data
+  // year-varying scalars live under properties.years[year]; community is static
+  function yd(props) { return (props.years && props.years[state.year]) || null; }
+  function yearVaries() { return state.metric !== "community"; }
 
   // Frame the Manhattan core on load: the default "where Manhattan ends" view
   // lives there, and most zones elsewhere are outside the high-coverage core.
@@ -68,26 +72,27 @@
 
   // ---- per-feature color ---------------------------------------------------
   function colorFor(props) {
-    var v;
-    if (state.metric === "gravity") {
-      v = props.gravity_surprise;
-      if (v == null) return NODATA;
-      var t = clamp01((v + GRAV_LIM) / (2 * GRAV_LIM)); // -lim -> 0, +lim -> 1
-      return diverging(t, BLUE, WHITE, RED);
-    }
-    if (state.metric === "community") {
+    var v, yr = yd(props);
+    if (state.metric === "community") {           // static (2015 reference partition)
       var c = props.community;
       if (c == null) return NODATA;
       return COMMUNITY[c % COMMUNITY.length];
     }
+    if (yr == null) return NODATA;                // no data for this zone-year
+    if (state.metric === "gravity") {
+      v = yr.gs;
+      if (v == null) return NODATA;
+      var t = clamp01((v + GRAV_LIM) / (2 * GRAV_LIM)); // -lim -> 0, +lim -> 1
+      return diverging(t, BLUE, WHITE, RED);
+    }
     if (state.metric === "netflow") {
-      v = props["nfi_" + state.period];
+      v = yr.nf[state.period];
       if (v == null) return NODATA;
       var tn = clamp01((v + 1) / 2); // -1 source -> 0, +1 sink -> 1
       return diverging(tn, GREEN, MIDG, PURPLE);
     }
     if (state.metric === "volume") {
-      v = props["in_" + state.period];
+      v = yr.v[state.period];
       if (v == null) return NODATA;
       // log scale: thin tail, fat core
       var tv = clamp01(Math.log10(v + 1) / Math.log10(700000));
@@ -107,21 +112,23 @@
 
   // ---- tooltip -------------------------------------------------------------
   function metricLine(props) {
-    if (state.metric === "gravity") {
-      var g = props.gravity_surprise;
-      return "gravity residual: <span class='tip-val'>" + (g == null ? "n/a" : g.toFixed(2)) + "</span>";
-    }
     if (state.metric === "community") {
       return "community: <span class='tip-val'>" + communityName(props.community) + "</span>";
     }
+    var yr = yd(props);
+    if (state.metric === "gravity") {
+      var g = yr ? yr.gs : null;
+      return state.year + " gravity residual: <span class='tip-val'>" +
+        (g == null ? "n/a" : g.toFixed(2)) + "</span>";
+    }
     if (state.metric === "netflow") {
-      var nf = props["nfi_" + state.period];
+      var nf = yr ? yr.nf[state.period] : null;
       var tag = nf == null ? "" : (nf < -0.05 ? " (source)" : nf > 0.05 ? " (sink)" : " (balanced)");
-      return "net flow, " + PERIOD_LABEL[state.period] + ": <span class='tip-val'>" +
+      return state.year + " net flow, " + PERIOD_LABEL[state.period] + ": <span class='tip-val'>" +
         (nf == null ? "n/a" : nf.toFixed(3)) + "</span>" + tag;
     }
-    var vol = props["in_" + state.period];
-    return "destinations, " + PERIOD_LABEL[state.period] + ": <span class='tip-val'>" +
+    var vol = yr ? yr.v[state.period] : null;
+    return state.year + " destinations, " + PERIOD_LABEL[state.period] + ": <span class='tip-val'>" +
       (vol == null ? "n/a" : vol.toLocaleString()) + "</span> trips";
   }
 
@@ -161,7 +168,7 @@
     if (state.metric === "gravity") {
       var gs = buildGradientStops(function (t) { return diverging(t, BLUE, WHITE, RED); }, 24);
       html =
-        "<div class='legend-title'>Gravity residual</div>" +
+        "<div class='legend-title'>Gravity residual &middot; " + state.year + "</div>" +
         "<div class='legend-bar'><span>under (-" + GRAV_LIM + ")</span>" +
         "<span class='legend-gradient' style='background:" + gradientCss(gs) + "'></span>" +
         "<span>over (+" + GRAV_LIM + ")</span></div>" +
@@ -172,18 +179,18 @@
       for (var i = 0; i < COMMUNITY.length; i++) {
         cats += "<span class='legend-cat'><i style='background:" + COMMUNITY[i] + "'></i>" + COMMUNITY_NAMES[i] + "</span>";
       }
-      html = "<div class='legend-title'>Leiden communities (4)</div><div class='legend-cats'>" + cats + "</div>";
+      html = "<div class='legend-title'>Leiden communities (2015 reference)</div><div class='legend-cats'>" + cats + "</div>";
     } else if (state.metric === "netflow") {
       var ns = buildGradientStops(function (t) { return diverging(t, GREEN, MIDG, PURPLE); }, 24);
       html =
-        "<div class='legend-title'>Net-flow imbalance &middot; " + PERIOD_LABEL[state.period] + "</div>" +
+        "<div class='legend-title'>Net-flow imbalance &middot; " + state.year + " &middot; " + PERIOD_LABEL[state.period] + "</div>" +
         "<div class='legend-bar'><span>source (-1)</span>" +
         "<span class='legend-gradient' style='background:" + gradientCss(ns) + "'></span>" +
         "<span>sink (+1)</span></div>";
     } else {
       var vs = buildGradientStops(function (t) { return mix(SEQ_LO, SEQ_HI, t); }, 24);
       html =
-        "<div class='legend-title'>Destination volume (log) &middot; " + PERIOD_LABEL[state.period] + "</div>" +
+        "<div class='legend-title'>Destination volume (log) &middot; " + state.year + " &middot; " + PERIOD_LABEL[state.period] + "</div>" +
         "<div class='legend-bar'><span>few</span>" +
         "<span class='legend-gradient' style='background:" + gradientCss(vs) + "'></span>" +
         "<span>many</span></div>";
@@ -195,30 +202,42 @@
   function renderCaption() {
     var c = document.getElementById("map-caption");
     if (state.metric === "gravity") {
-      c.innerHTML = "<b>Where Manhattan ends.</b> Blue zones draw fewer trips than the gravity " +
-        "model predicts from size and distance; red zones draw more. The demand core (Times Sq, " +
-        "Midtown) runs hot red, while the East Village, Alphabet City and the Upper East/West Side " +
-        "sit under-connected in blue. The edge of red is the edge of the network's idea of Manhattan.";
+      c.innerHTML = "<b>Where Manhattan ends &middot; " + state.year + ".</b> Blue zones draw fewer trips " +
+        "than the gravity model predicts from size and distance; red zones draw more. The demand core " +
+        "(Times Sq, Midtown) runs hot red, while the East Village, Alphabet City and the Upper East/West " +
+        "Side sit under-connected in blue. Drag the year to watch Midtown cool from deep red toward " +
+        "neutral as commuting falls away, while the under-connected edges hold.";
     } else if (state.metric === "community") {
-      c.innerHTML = "<b>Four communities.</b> An undirected Leiden projection splits the graph into " +
-        "four blocks (significance z = 13.8) that track function more than borough lines: a Midtown " +
-        "commercial core, an Upper Manhattan and Bronx group, a downtown-and-Brooklyn group, and a " +
-        "large outer-borough and airport community.";
+      c.innerHTML = "<b>Four communities (2015 reference).</b> An undirected Leiden projection splits the " +
+        "graph into four blocks (significance z = 13.8) that track function more than borough lines: a " +
+        "Midtown commercial core, an Upper Manhattan and Bronx group, a downtown-and-Brooklyn group, and " +
+        "a large outer-borough and airport community. The partition barely moves across the decade " +
+        "(consecutive-year agreement averages ARI 0.88), so the map shows the stable reference rather " +
+        "than re-coloring every year; the slider drives the other three lenses.";
     } else if (state.metric === "netflow") {
-      c.innerHTML = "<b>Net flow, " + PERIOD_LABEL[state.period] + ".</b> Green zones send more than " +
-        "they receive (sources); purple zones receive more than they send (sinks). " + NF_CAPTION[state.period];
+      c.innerHTML = "<b>Net flow, " + state.year + " &middot; " + PERIOD_LABEL[state.period] + ".</b> Green " +
+        "zones send more than they receive (sources); purple zones receive more than they send (sinks). " +
+        NF_CAPTION[state.period];
     } else {
-      c.innerHTML = "<b>Destinations, " + PERIOD_LABEL[state.period] + ".</b> Darker zones are the " +
-        "stronger arrival magnets in this window, on a log scale. Watch the East Village climb from " +
-        "ordinary by day to the city's top destination at night, while Midtown's daytime dominance fades.";
+      c.innerHTML = "<b>Destinations, " + state.year + " &middot; " + PERIOD_LABEL[state.period] + ".</b> " +
+        "Darker zones are the stronger arrival magnets in this window, on a log scale. Watch the East " +
+        "Village climb from ordinary by day to the city's top destination at night, while Midtown's " +
+        "daytime dominance fades.";
     }
   }
 
   // ---- OD edge overlay -----------------------------------------------------
+  function edgesForYear() {
+    if (!edgesData) return [];
+    if (edgesData.by_year) return edgesData.by_year[state.year] || [];
+    return edgesData;  // backward-compat with the old flat array
+  }
   function buildEdges() {
+    if (edgeLayer) { map.removeLayer(edgeLayer); }
     edgeLayer = L.layerGroup();
-    edgeMax = edgesData.reduce(function (m, e) { return Math.max(m, e.trips); }, 1);
-    edgesData.forEach(function (e) {
+    var es = edgesForYear();
+    edgeMax = es.reduce(function (m, e) { return Math.max(m, e.trips); }, 1);
+    es.forEach(function (e) {
       if (!e.from || !e.to) return;
       var w = 0.4 + 3.6 * (e.trips / edgeMax);
       L.polyline([e.from, e.to], {
@@ -240,12 +259,28 @@
     var pr = document.getElementById("period-row");
     var needsPeriod = state.metric === "netflow" || state.metric === "volume";
     pr.classList.toggle("is-hidden", !needsPeriod);
+    // The year slider drives every lens except community (a fixed 2015 reference).
+    var yrwrap = document.getElementById("year-row");
+    if (yrwrap) {
+      yrwrap.classList.toggle("is-disabled", !yearVaries());
+      var sl = document.getElementById("year-slider");
+      if (sl) sl.disabled = !yearVaries();
+    }
+  }
+
+  function setYearReadout() {
+    var out = document.getElementById("year-readout");
+    if (out) out.textContent = yearVaries() ? state.year : "2015 reference";
   }
 
   // ---- wiring --------------------------------------------------------------
   function wireControls() {
     document.getElementById("metric-choices").addEventListener("change", function (e) {
-      if (e.target.name === "metric") { state.metric = e.target.value; redraw(); }
+      if (e.target.name === "metric") {
+        state.metric = e.target.value;
+        setYearReadout();
+        redraw();
+      }
     });
     var btns = document.querySelectorAll(".period-btn");
     btns.forEach(function (b) {
@@ -256,6 +291,23 @@
       });
     });
     document.getElementById("edge-toggle").addEventListener("change", syncEdges);
+
+    // year slider: index into YEARS so we never depend on a contiguous range
+    var sl = document.getElementById("year-slider");
+    if (sl && YEARS.length) {
+      sl.min = 0;
+      sl.max = YEARS.length - 1;
+      sl.step = 1;
+      sl.value = Math.max(0, YEARS.indexOf(state.year));
+      sl.addEventListener("input", function () {
+        if (!yearVaries()) return;            // community lens ignores the year
+        state.year = YEARS[parseInt(sl.value, 10)] || state.year;
+        setYearReadout();
+        buildEdges();                          // refresh the OD overlay for the new year
+        syncEdges();
+        redraw();
+      });
+    }
   }
 
   // ---- load ----------------------------------------------------------------
@@ -270,9 +322,13 @@
     .then(function (res) {
       zonesData = res[0];
       edgesData = res[1];
+      YEARS = (zonesData && zonesData.years) || (edgesData && edgesData.years) || ["2015"];
+      // default to the earliest year so the gravity view matches the page copy
+      if (YEARS.indexOf(state.year) === -1) state.year = YEARS[0];
       geoLayer = L.geoJSON(zonesData, { style: styleFor, onEachFeature: onEachFeature }).addTo(map);
       buildEdges();
       wireControls();
+      setYearReadout();
       redraw();
     })
     .catch(function (err) {

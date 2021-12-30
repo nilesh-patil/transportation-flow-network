@@ -178,6 +178,28 @@
 
   .leaflet-control-attribution { font-size: 0.62rem; background: rgba(255,255,248,0.85); }
 
+  /* Year slider */
+  #year-row.is-disabled { opacity: 0.4; }
+  .year-control { display: flex; align-items: center; gap: 0.9rem; }
+  .year-slider-wrap { flex: 1; max-width: 460px; }
+  #year-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+  #year-slider:disabled { cursor: not-allowed; }
+  .year-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    margin-top: 0.15rem;
+  }
+  .year-readout {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 8ch;
+  }
+
   @media (max-width: 900px) {
     .map-shell { height: 460px; }
   }
@@ -200,10 +222,11 @@
   <p>
     Every claim in the findings is a statement about geography, so here is the geography
     itself. The map holds all 263 TLC taxi zones. Pick a metric and the zones recolor;
-    hover any zone for its name, borough, and the value being shown. The data is the same
-    yellow-taxi network the rest of the site is built from, with its same honest limit:
-    yellow cabs over-sample Manhattan and the airports, so the outer boroughs are thin by
-    construction, not by accident.
+    drag the year slider from 2015 to 2024 and watch the network change; hover any zone for
+    its name, borough, and the value being shown. The data is the same yellow-taxi network
+    the rest of the site is built from, with its same honest limit: yellow cabs over-sample
+    Manhattan and the airports, so the outer boroughs are thin by construction, not by
+    accident.
   </p>
 
   <figure class="figure-wide">
@@ -219,6 +242,18 @@
           <label><input type="radio" name="metric" value="community"><span>Community</span></label>
           <label><input type="radio" name="metric" value="netflow"><span>Net flow by time of day</span></label>
           <label><input type="radio" name="metric" value="volume"><span>Destinations by time of day</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset id="year-row">
+        <legend>Year</legend>
+        <div class="year-control">
+          <div class="year-slider-wrap">
+            <input type="range" id="year-slider" min="0" max="9" step="1" value="0"
+                   aria-label="Year, 2015 to 2024">
+            <div class="year-ticks" aria-hidden="true"><span>2015</span><span>2018</span><span>2021</span><span>2024</span></div>
+          </div>
+          <output id="year-readout" class="year-readout" for="year-slider">2015</output>
         </div>
       </fieldset>
 
@@ -242,11 +277,15 @@
     </div>
 
     <figcaption>
-      <span class="label">Figure.</span> The flow network, made browsable. Four lenses on
-      the same 142.2M trips: the gravity residual that marks where the demand core stops,
-      the four communities the graph splits into, net flow that flips between source and
-      sink as the day turns over, and raw destination pull by daypart. Built with Leaflet
-      over <code>data/zones.geojson</code> and <code>data/top_edges.json</code>.
+      <span class="label">Figure.</span> The flow network, made browsable, across the full
+      2015-2024 decade. Four lenses: the gravity residual that marks where the demand core
+      stops, the four communities the graph splits into, net flow that flips between source
+      and sink as the day turns over, and raw destination pull by daypart. The year slider
+      drives the three quantitative lenses (the gravity, net-flow and destination views are
+      recomputed for each year, so you can watch the COVID-2020 collapse and the hub shift
+      toward residential Manhattan); the community lens shows the stable 2015 reference
+      partition. Built with Leaflet over <code>data/zones.geojson</code> and
+      <code>data/top_edges.json</code>.
     </figcaption>
   </figure>
 </main>
@@ -262,6 +301,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""></script>
-<script src="assets/js/demo.js?v=2"></script>
+<script src="assets/js/demo.js?v=3"></script>
 </body>
 </html>
