@@ -174,23 +174,101 @@ def fig_community_map(zones, node_analysis):
 
 
 def fig_where_manhattan_ends(zones, node_analysis, res):
+    """Flagship: annotated gravity-residual map of the high-coverage core, paired
+    with a ranked lollipop strip of the most under- and over-connected zones.
+
+    Only the high-coverage core (Yellow Zone + airports) is colored; every other
+    zone is greyed, so the eye trusts the residual exactly where the yellow-taxi
+    sample is dense. Marquee zones are labeled in place, and the strip names the
+    extremes the map alone cannot.
+    """
+    import matplotlib.colors as mcolors
+
+    # zones already carries zone/service_zone; take only the residual from node_analysis
     g = zones.merge(node_analysis[["zone_id", "gravity_surprise"]], on="zone_id", how="left")
-    core = g.dropna(subset=["gravity_surprise"])
-    vmax = np.nanpercentile(np.abs(core["gravity_surprise"]), 98)
-    fig, ax = plt.subplots(figsize=(9, 10))
-    zones.boundary.plot(ax=ax, color="#dddddd", lw=0.3)
-    core.plot(column="gravity_surprise", cmap="RdBu_r", ax=ax, legend=True, vmin=-vmax, vmax=vmax,
-              edgecolor="#ffffff", lw=0.3,
-              legend_kwds={"label": "gravity surprise (blue = under-connected, red = over-connected)",
-                           "shrink": 0.6})
+    in_core = g["service_zone"].isin(["Yellow Zone", "Airports", "EWR"]) & g["gravity_surprise"].notna()
+    core, noncore = g[in_core], g[~in_core]
+    vmax = float(np.nanpercentile(np.abs(core["gravity_surprise"]), 98))
+    norm = mcolors.Normalize(-vmax, vmax)
+    cmap = plt.cm.RdBu_r
+
+    fig = plt.figure(figsize=(13.5, 9.2))
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.5, 1], wspace=0.04)
+    ax, axr = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+
+    # ---- panel 1: the map ----------------------------------------------------
+    noncore.plot(ax=ax, color="#e9e9e2", edgecolor="#ffffff", lw=0.3)   # out-of-core, greyed
+    core.plot(column="gravity_surprise", cmap=cmap, norm=norm, ax=ax,
+              edgecolor="#ffffff", lw=0.4)
     ax.set_xlim(*MANHATTAN_XLIM); ax.set_ylim(*MANHATTAN_YLIM)
-    ax.set_title("Where Manhattan ends: connectivity residual vs a\ndoubly-constrained gravity model")
     ax.set_axis_off()
+    ax.set_title("Where Manhattan ends", loc="left", fontsize=15, fontweight="bold")
+    ax.text(0, 1.0, "connectivity residual from a doubly-constrained gravity model, high-coverage core only",
+            transform=ax.transAxes, fontsize=9.5, color="#555", va="top")
+
+    # marquee callouts: (name substring -> display label, x-offset pts, y-offset pts, ha)
+    cc = core.copy()
+    cen = cc.geometry.centroid
+    cc["cx"], cc["cy"] = cen.x.values, cen.y.values
+    marquee = {
+        "Upper West Side South": ("Upper West Side", -66, 26, "right"),
+        "Upper East Side North": ("Upper East Side", 60, 30, "left"),
+        "Times Sq": ("Times Sq", -80, 4, "right"),
+        "Garment": ("Garment District", -86, -20, "right"),
+        "East Village": ("East Village", 58, 6, "left"),
+        "Alphabet City": ("Alphabet City", 70, -16, "left"),
+        "Lower East Side": ("Lower East Side", 60, -34, "left"),
+    }
+    for sub, (label, ox, oy, ha) in marquee.items():
+        hit = cc[cc["zone"].str.contains(sub, case=False, na=False)]
+        if not len(hit):
+            continue
+        r = hit.iloc[0]
+        ax.annotate(f"{label}  {r['gravity_surprise']:+.0f}",
+                    xy=(r["cx"], r["cy"]), xytext=(ox, oy), textcoords="offset points",
+                    fontsize=8.5, ha=ha, va="center", color="#1a1a1a",
+                    arrowprops=dict(arrowstyle="-", color="#666", lw=0.7,
+                                    connectionstyle="arc3,rad=0.12"),
+                    bbox=dict(boxstyle="round,pad=0.18", fc="#fffff8", ec="#ccccc4", lw=0.5, alpha=0.92))
+
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax,
+                      location="bottom", shrink=0.55, pad=0.01, aspect=32)
+    cb.set_label("under-connected  ←  gravity residual  →  over-connected", fontsize=9)
+    cb.ax.tick_params(labelsize=8)
+
+    # ---- panel 2: ranked lollipop strip --------------------------------------
+    cs = core.dropna(subset=["gravity_surprise"]).copy()
+    k = 11
+    sel = pd.concat([cs.nsmallest(k, "gravity_surprise"), cs.nlargest(k, "gravity_surprise")])
+    sel = sel.drop_duplicates("zone_id").sort_values("gravity_surprise").reset_index(drop=True)
+    yy = np.arange(len(sel))
+    vals = sel["gravity_surprise"].to_numpy()
+    colors = cmap(norm(vals))
+    axr.axvline(0, color="#bbbbbb", lw=0.8)
+    axr.hlines(yy, 0, vals, color=colors, lw=2.2)
+    axr.scatter(vals, yy, color=colors, s=42, zorder=3, edgecolor="#ffffff", lw=0.6)
+    for y, v, name in zip(yy, vals, sel["zone"]):
+        axr.text(v + (0.5 if v >= 0 else -0.5), y, f"{v:+.1f}", va="center",
+                 ha="left" if v >= 0 else "right", fontsize=6.8, color="#555")
+    axr.set_yticks(yy)
+    axr.set_yticklabels(sel["zone"], fontsize=7.6)
+    axr.set_ylim(-0.7, len(sel) - 0.3)
+    pad = vmax * 0.28
+    axr.set_xlim(-vmax - pad, vmax + pad)
+    axr.set_xlabel("mean deviance residual", fontsize=9)
+    axr.set_title(f"The {k} most under- and over-connected core zones", loc="left", fontsize=10.5)
+    for s in ("top", "right", "left"):
+        axr.spines[s].set_visible(False)
+    axr.tick_params(left=False)
+
     save(fig, "08_where_manhattan_ends",
          "Flagship figure. Per-zone mean deviance residual from a doubly-constrained gravity model "
-         "(controls for each zone's own volume and distance). Blue zones (East Village/Alphabet City, "
-         "Upper East/West Side) are under-connected given their location - functionally peripheral despite "
-         "central geography. Red (Times Sq/Midtown) are over-connected. Scoped to the high-coverage core.")
+         "(controls for each zone's own volume and distance to everywhere else). Only the high-coverage core "
+         "(Yellow Zone plus airports) is colored; the rest of the city is greyed because yellow-taxi coverage "
+         "there is too thin to trust the residual. Blue zones (the Upper East and West Sides uptown, the East "
+         "Village and Alphabet City downtown) are under-connected given how central they sit; red zones "
+         "(Times Sq, the Midtown spine) are over-connected. The strip at right names the extremes the map "
+         "alone cannot.")
 
 
 def fig_net_flow(zones, node_analysis):

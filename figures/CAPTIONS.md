@@ -24,7 +24,7 @@ In- and out-degree against total trips. Inner-city draws (Penn, Midtown) pull hu
 Leiden communities (weighted, directed-aware). The partition is seed-stable (mean ARI ~0.77) and cuts across borough lines, redrawing NYC by taxi connectivity rather than administration.
 
 ### 08_where_manhattan_ends
-Flagship figure. Per-zone mean deviance residual from a doubly-constrained gravity model (controls for each zone's own volume and distance). Blue zones (East Village/Alphabet City, Upper East/West Side) are under-connected given their location - functionally peripheral despite central geography. Red (Times Sq/Midtown) are over-connected. Scoped to the high-coverage core.
+Flagship figure. Per-zone mean deviance residual from a doubly-constrained gravity model (controls for each zone's own volume and distance to everywhere else). Only the high-coverage core (Yellow Zone plus airports) is colored; the rest of the city is greyed because yellow-taxi coverage there is too thin to trust the residual. Blue zones (the Upper East and West Sides uptown, the East Village and Alphabet City downtown) are under-connected given how central they sit; red zones (Times Sq, the Midtown spine) are over-connected. Marquee zones are labeled in place, and the ranked strip at right names the most under- and over-connected core zones the map alone cannot.
 
 ### 09_net_flow_source_sink
 Annual net-flow index (out-strength minus in-strength, normalised). Over a full year most zones are near balanced; the directional structure is strongest within the day (see day/night figure).
