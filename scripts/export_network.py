@@ -94,6 +94,30 @@ def main() -> None:
             pos[z] = (ux + (sub[z][0] - (sx.min() + sx.max()) / 2) / sp * 2 * lobe_r,
                       uy + (sub[z][1] - (sy.min() + sy.max()) / 2) / sp * 2 * lobe_r)
 
+    # ---- radial angles for the hierarchical-edge-bundling view ---------------
+    # Each community gets a contiguous arc proportional to its size (with gaps);
+    # within a community, nodes are ordered by their force-layout angle around the
+    # community centroid so spatially-near zones stay adjacent on the ring.
+    N = len(active)
+    gap = 0.022 * 2 * math.pi
+    usable = 2 * math.pi - gap * K
+    ang = {}
+    cur = -math.pi / 2
+    for c in range(K):
+        members = [z for z in active if comm[z] == c]
+        ccx = float(np.mean([pos[z][0] for z in members]))
+        ccy = float(np.mean([pos[z][1] for z in members]))
+        members.sort(key=lambda z: math.atan2(pos[z][1] - ccy, pos[z][0] - ccx))
+        span = usable * (len(members) / N)
+        for i, z in enumerate(members):
+            ang[z] = cur + (i + 0.5) / len(members) * span
+        cur += span + gap
+    comm_ma = {}
+    for c in range(K):
+        ms = [z for z in active if comm[z] == c]
+        comm_ma[c] = math.atan2(float(np.mean([math.sin(ang[z]) for z in ms])),
+                                float(np.mean([math.cos(ang[z]) for z in ms])))
+
     # normalize to [0, 1] preserving aspect ratio
     xs = np.array([pos[n][0] for n in active])
     ys = np.array([pos[n][1] for n in active])
@@ -118,6 +142,7 @@ def main() -> None:
             "borough": str(na.loc[z, "borough"]) if z in na.index else "",
             "c": comm[z],
             "x": round(x, 4), "y": round(y, 4),
+            "a": round(ang[z], 4),                        # ring angle for bundling view
             "r": round(math.sqrt(s / smax), 4),          # 0..1, JS scales to px
             "ins": int(na.loc[z, "in_strength"]) if z in na.index else 0,
             "outs": int(na.loc[z, "out_strength"]) if z in na.index else 0,
@@ -131,7 +156,8 @@ def main() -> None:
 
     communities = [{"id": c, "name": COMMUNITY_NAMES[c] if c < len(COMMUNITY_NAMES) else f"Community {c}",
                     "color": COMMUNITY_COLORS[c % len(COMMUNITY_COLORS)],
-                    "n": int(sum(1 for z in active if comm[z] == c))}
+                    "n": int(sum(1 for z in active if comm[z] == c)),
+                    "ma": round(comm_ma[c], 4)}
                    for c in range(K)]
 
     out = {"nodes": nodes, "edges": edges, "communities": communities,
