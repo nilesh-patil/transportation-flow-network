@@ -491,8 +491,10 @@ iframe {
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap-lg);
-  margin: var(--gap-lg) 0;
-  padding: var(--gap) 0;
+  /* Keep the auto side-margins and side padding from `.site-main > *` so the row
+     stays on the text measure instead of breaking out to the left page edge. */
+  margin: var(--gap-lg) auto;
+  padding: var(--gap) 1.5rem;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
