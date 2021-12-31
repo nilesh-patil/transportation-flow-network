@@ -36,6 +36,11 @@
     background: var(--paper);
     font-family: "Newsreader", Georgia, serif;
   }
+  /* The site's responsive figure rule (.figure-wide svg { width: 100% }) and the
+     global svg { max-width: 100% } otherwise collapse Leaflet's overlay SVG to
+     zero width and clip every zone and edge. Let Leaflet size its own layers. */
+  #map svg { width: auto; max-width: none; height: auto; }
+  #map img { max-width: none; }
   /* Leaflet popups + tooltips, restyled to the paper palette */
   .leaflet-tooltip.tfn-tip {
     background: var(--paper);
@@ -301,6 +306,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""></script>
-<script src="assets/js/demo.js?v=3"></script>
+<script src="assets/js/demo.js?v=4"></script>
 </body>
 </html>

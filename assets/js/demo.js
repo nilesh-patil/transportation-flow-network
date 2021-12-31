@@ -239,9 +239,11 @@
     edgeMax = es.reduce(function (m, e) { return Math.max(m, e.trips); }, 1);
     es.forEach(function (e) {
       if (!e.from || !e.to) return;
-      var w = 0.4 + 3.6 * (e.trips / edgeMax);
+      // sqrt scale: trip volume is heavy-tailed, so a linear width leaves all but
+      // the few biggest corridors invisibly thin
+      var w = 0.5 + 4.5 * Math.sqrt(e.trips / edgeMax);
       L.polyline([e.from, e.to], {
-        color: INK, weight: w, opacity: 0.28, lineCap: "round", interactive: false
+        color: INK, weight: w, opacity: 0.42, lineCap: "round", interactive: false
       }).addTo(edgeLayer);
     });
   }
