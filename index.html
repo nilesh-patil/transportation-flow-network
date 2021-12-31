@@ -37,6 +37,11 @@
     .net-leg:hover, .net-leg.is-active { color: var(--accent); }
     .net-leg.is-active i { outline: 2px solid var(--accent); outline-offset: 1px; }
     .net-hint { position: absolute; right: 12px; bottom: 10px; font-family: "JetBrains Mono", monospace; font-size: 0.66rem; color: var(--ink-faint); pointer-events: none; }
+    .net-modes { position: absolute; top: 12px; right: 12px; display: flex; border: 1px solid var(--rule); background: rgba(255,255,248,0.92); z-index: 4; }
+    .net-mode { border: none; background: transparent; font-family: "Newsreader", Georgia, serif; font-size: 0.82rem; padding: 0.32rem 0.7rem; color: var(--ink); cursor: pointer; }
+    .net-mode + .net-mode { border-left: 1px solid var(--rule); }
+    .net-mode[aria-pressed="true"] { color: var(--accent); }
+    .net-mode:hover { color: var(--accent); }
     @media (max-width: 760px) { .net-shell { height: 420px; } .net-hint { display: none; } }
   </style>
 </head>
@@ -99,12 +104,16 @@
 
     <figure class="figure-wide">
       <div class="net-shell">
-        <canvas id="net-canvas" role="img" aria-label="Force-directed network of 262 NYC taxi zones, colored by community, sized by strength, with the disparity-filter backbone as edges."></canvas>
+        <canvas id="net-canvas" role="img" aria-label="Network of 262 NYC taxi zones, colored by community, sized by strength, with the disparity-filter backbone as edges. Toggle between a force-directed layout and radial hierarchical edge bundling."></canvas>
         <ul id="net-legend" class="net-legend" aria-label="Communities (click to isolate)"></ul>
+        <div class="net-modes" role="group" aria-label="Layout">
+          <button class="net-mode" data-mode="force" aria-pressed="true">Force-directed</button>
+          <button class="net-mode" data-mode="bundle" aria-pressed="false">Edge bundling</button>
+        </div>
         <div id="net-tip" class="net-tip" hidden></div>
         <div class="net-hint">hover a zone &middot; click a community &middot; scroll to zoom, drag to pan</div>
       </div>
-      <figcaption>The flow network as a graph, not a map. Each node is a taxi zone, sized by total strength (trips in plus out) and colored by its Leiden community; edges are the disparity-filter backbone, the roughly 6,190 statistically significant connections that carry 87.6% of all trips. The four communities settle into separate lobes: the small, dense Midtown commercial core, the large outer-borough and airport group, downtown and Brooklyn, and Upper Manhattan and the Bronx. The lines crossing between lobes are the inter-community flows that stitch the city together. Hover any zone to trace its backbone, or click a community to isolate it. <span id="net-fallback" hidden>Interactive graph needs the page served over http: run <code>python3 -m http.server</code> in <code>site/</code>.</span></figcaption>
+      <figcaption>The flow network as a graph, not a map. Each node is a taxi zone, sized by total strength (trips in plus out) and colored by its Leiden community; edges are the disparity-filter backbone, the roughly 6,190 statistically significant connections that carry 87.6% of all trips. The four communities settle into separate lobes: the small, dense Midtown commercial core, the large outer-borough and airport group, downtown and Brooklyn, and Upper Manhattan and the Bronx. The lines crossing between lobes are the inter-community flows that stitch the city together. Switch to <b>edge bundling</b> to wrap the same zones onto a ring grouped by community, with the flows drawn as bundled curves: the thick bundles arcing across the center are the heavy inter-district corridors. Hover any zone to trace its backbone, or click a community to isolate it. <span id="net-fallback" hidden>Interactive graph needs the page served over http: run <code>python3 -m http.server</code> in <code>site/</code>.</span></figcaption>
     </figure>
 
     <h2 id="tour">Three ways in</h2>
@@ -141,6 +150,6 @@
           onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
 
   <!-- Overview network graph -->
-  <script defer src="assets/js/network.js?v=1"></script>
+  <script defer src="assets/js/network.js?v=2"></script>
 </body>
 </html>
