@@ -19,7 +19,7 @@
         integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
         crossorigin="anonymous">
 
-  <link rel="stylesheet" href="assets/css/style.css?v=3">
+  <link rel="stylesheet" href="assets/css/style.css?v=4">
 </head>
 <body>
 <header class="site-header">
@@ -485,8 +485,29 @@
     Run them and the answers are sometimes a clean finding and sometimes an honest "no". The four
     diagnostics below ask how the graph fails under attack, whether it is scale-free, how it stacks
     up against null models, and how efficiently it routes through real geography. Where the data does
-    not support a headline claim, the verdict says so.
+    not support a headline claim, the verdict says so. First, the object itself.
   </p>
+
+  <figure class="figure-wide">
+    <div class="net-shell">
+      <canvas id="net-canvas" role="img" aria-label="Network of 262 NYC taxi zones, colored by community, sized by strength, with the disparity-filter backbone as edges. Toggle between a force-directed layout and radial hierarchical edge bundling."></canvas>
+      <ul id="net-legend" class="net-legend" aria-label="Communities (click to isolate)"></ul>
+      <div class="net-modes" role="group" aria-label="Layout">
+        <button class="net-mode" data-mode="force" aria-pressed="true">Force-directed</button>
+        <button class="net-mode" data-mode="bundle" aria-pressed="false">Edge bundling</button>
+      </div>
+      <div id="net-tip" class="net-tip" hidden></div>
+      <div class="net-hint">hover a zone &middot; click a community &middot; scroll to zoom, drag to pan</div>
+    </div>
+    <figcaption>
+      <span class="label">The network itself.</span> All 262 active zones, colored by their four Leiden
+      communities and sized by total strength; edges are the disparity-filter backbone, the ~6,190
+      connections that carry 87.6% of trips. Force-directed pulls the communities into separate lobes;
+      edge bundling wraps them onto a ring and bundles the inter-district flows. Everything measured
+      below is a property of this object. <span id="net-fallback" hidden>Interactive graph needs the
+      page served over http.</span>
+    </figcaption>
+  </figure>
 
   <h3 id="robustness">Robustness: random failure is survivable, hub removal is not</h3>
 
@@ -603,73 +624,69 @@
     </figcaption>
   </figure>
 
+  <h3>What holds steady</h3>
+
   <p>
-    Now hold the structure up against the volume. Annual trips have a coefficient of variation of
-    0.61 across the decade, a fleet that changes size by more than half. The geometry does not move
-    with it. Global efficiency has a CV of 0.004 around a mean of 0.169; the gravity-model CPC has a
-    CV of 0.007 around a mean of 0.81; the gravity decay \(\beta\) has a CV of 0.064; modularity \(Q\)
-    a CV of 0.074; the maximum k-core a CV of 0.098. Degree assortativity stays negative throughout,
-    between \(-0.123\) and \(-0.184\), so the hub-and-spoke structure never dissolves, and the
-    community count stays at 3 to 4 every year. The spatial geometry of taxi travel is a structural
-    invariant of the city, not of the fleet.
+    Hold the structure up against that volume. Annual trips have a coefficient of variation of 0.61
+    across the decade, a fleet that changes size by more than half, yet the geometry does not move
+    with it. Global efficiency has a CV of 0.004 around a mean of 0.169; the gravity-model CPC a CV of
+    0.007 around 0.81; the gravity decay \(\beta\) a CV of 0.064; modularity \(Q\) a CV of 0.074; the
+    maximum k-core a CV of 0.098. Degree assortativity stays negative throughout, between \(-0.123\)
+    and \(-0.184\), so the hub-and-spoke structure never dissolves. The communities are just as
+    durable: consecutive-year Leiden partitions align at an average Adjusted Rand Index of 0.883, and
+    the 2019 to 2020 COVID boundary scores 0.943, so the shock did not re-draw the city's functional
+    districts. The one genuine reshuffle is 2015 to 2016 (ARI 0.536), before the steady decline rather
+    than during the pandemic. The spatial geometry of taxi travel is a structural invariant of the
+    city, not of the fleet.
   </p>
 
-  <figure class="figure-wide">
-    <img src="assets/figures/27_gravity_beta_over_time.svg" alt="The gravity decay exponent beta plotted per year from 2015 to 2024, nearly flat despite the collapse in volume.">
-    <figcaption>
-      <span class="label">Figure 15.</span> The gravity decay exponent \(\beta\) per year. It barely
-      moves (CV 0.064) while the fleet loses most of its volume, one of several metrics whose
-      near-constant value makes the invariance case.
-    </figcaption>
+  <figure class="figure-pair">
+    <figure>
+      <img src="assets/figures/27_gravity_beta_over_time.svg" alt="The gravity decay exponent beta plotted per year from 2015 to 2024, nearly flat despite the collapse in volume.">
+      <figcaption>
+        <span class="label">Figure 15.</span> The gravity decay exponent \(\beta\) per year, barely
+        moving (CV 0.064) while the fleet loses most of its volume.
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="assets/figures/28_community_stability_over_time.svg" alt="Adjusted Rand Index between consecutive-year Leiden community partitions, high throughout including across the COVID boundary.">
+      <figcaption>
+        <span class="label">Figure 16.</span> Consecutive-year Leiden alignment (Adjusted Rand Index):
+        mean 0.883, the 2019 to 2020 COVID boundary 0.943, only 2015 to 2016 (0.536) a real reshuffle.
+      </figcaption>
+    </figure>
   </figure>
+
+  <h3>What shifts</h3>
 
   <p>
     The few things that do change are changes of identity, not of shape. The top arrival hub flips
     from the commercial core to residential Manhattan: Midtown Center, Murray Hill and Times Square
     lead in 2015, but the Upper East Side North and South take the top spots from 2020 onward, as
-    work-trip demand fell faster than residential demand.
-  </p>
-
-  <figure class="figure-wide">
-    <img src="assets/figures/29_hub_asymmetry_evolution.svg" alt="The top arrival hub by year, shifting from commercial-core zones in 2015 to Upper East Side residential zones from 2020 on.">
-    <figcaption>
-      <span class="label">Figure 16.</span> The top arrival hub by year. The commercial core leads
-      early; from 2020 the Upper East Side North and South lead, a shift of identity even as the
-      hub-and-spoke shape holds.
-    </figcaption>
-  </figure>
-
-  <p>
-    The "where Manhattan ends" finding does not just survive the decade, it sharpens. Tracking the
-    per-year gravity-residual rank of the flagged zones, the East Village drifts further into the
-    under-connected tail over time, from about the 30th percentile of the Manhattan core down to the
-    13th, so its "reads like a suburb" character strengthens. Times Square stays pinned at the
+    work-trip demand fell faster than residential demand. And the "where Manhattan ends" finding does
+    not just survive the decade, it sharpens: tracking the per-year gravity-residual rank of the
+    flagged zones, the East Village drifts further into the under-connected tail, from about the 30th
+    percentile of the Manhattan core down to the 13th, while Times Square stays pinned at the
     over-connected top and the Upper East Side North at the under-connected bottom.
   </p>
 
-  <figure class="figure-wide">
-    <img src="assets/figures/30_manhattan_ends_drift.svg" alt="Per-year gravity-residual rank of flagged zones, with the East Village drifting deeper into the under-connected tail over the decade.">
-    <figcaption>
-      <span class="label">Figure 17.</span> Per-year gravity-residual rank of the flagged zones. The
-      East Village drifts from roughly the 30th to the 13th percentile of the core; Times Square stays
-      over-connected at the top and Upper East Side North under-connected at the bottom.
-    </figcaption>
-  </figure>
-
-  <p>
-    The communities are just as durable. Consecutive-year Leiden partitions align at an average
-    Adjusted Rand Index of 0.883, and the 2019 to 2020 COVID boundary scores 0.943: the shock did not
-    re-draw the city's functional districts. The one genuine reshuffle is 2015 to 2016, at ARI 0.536,
-    which sits before the period of steady decline rather than during the pandemic.
-  </p>
-
-  <figure class="figure-wide">
-    <img src="assets/figures/28_community_stability_over_time.svg" alt="Adjusted Rand Index between consecutive-year Leiden community partitions, high throughout including across the COVID boundary.">
-    <figcaption>
-      <span class="label">Figure 18.</span> Consecutive-year Leiden alignment, Adjusted Rand Index.
-      The mean is 0.883 and the 2019 to 2020 COVID boundary scores 0.943; the only real reshuffle is
-      2015 to 2016 (0.536), not the pandemic.
-    </figcaption>
+  <figure class="figure-pair">
+    <figure>
+      <img src="assets/figures/29_hub_asymmetry_evolution.svg" alt="The top arrival hub by year, shifting from commercial-core zones in 2015 to Upper East Side residential zones from 2020 on.">
+      <figcaption>
+        <span class="label">Figure 17.</span> The top arrival hub by year: the commercial core leads
+        early; from 2020 the Upper East Side North and South lead, a shift of identity even as the
+        hub-and-spoke shape holds.
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="assets/figures/30_manhattan_ends_drift.svg" alt="Per-year gravity-residual rank of flagged zones, with the East Village drifting deeper into the under-connected tail over the decade.">
+      <figcaption>
+        <span class="label">Figure 18.</span> Per-year gravity-residual rank of the flagged zones: the
+        East Village drifts from roughly the 30th to the 13th percentile of the core; Times Square
+        stays over-connected, Upper East Side North under-connected.
+      </figcaption>
+    </figure>
   </figure>
 
   <p>
@@ -762,5 +779,8 @@
         integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
         crossorigin="anonymous"
         onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false});"></script>
+
+<!-- Overview/findings network graph -->
+<script defer src="assets/js/network.js?v=2"></script>
 </body>
 </html>
