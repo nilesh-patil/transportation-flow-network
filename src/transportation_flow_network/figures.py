@@ -252,6 +252,10 @@ def fig_where_manhattan_ends(zones, node_analysis, res):
                  ha="left" if v >= 0 else "right", fontsize=6.8, color="#555")
     axr.set_yticks(yy)
     axr.set_yticklabels(sel["zone"], fontsize=7.6)
+    # zone names go on the RIGHT edge of this panel so they cannot collide with
+    # the map in the panel gap on the left
+    axr.yaxis.set_label_position("right")
+    axr.tick_params(axis="y", left=False, right=False, labelleft=False, labelright=True)
     axr.set_ylim(-0.7, len(sel) - 0.3)
     pad = vmax * 0.28
     axr.set_xlim(-vmax - pad, vmax + pad)
@@ -259,7 +263,6 @@ def fig_where_manhattan_ends(zones, node_analysis, res):
     axr.set_title(f"The {k} most under- and over-connected core zones", loc="left", fontsize=10.5)
     for s in ("top", "right", "left"):
         axr.spines[s].set_visible(False)
-    axr.tick_params(left=False)
 
     save(fig, "08_where_manhattan_ends",
          "Flagship figure. Per-zone mean deviance residual from a doubly-constrained gravity model "
