@@ -411,6 +411,16 @@ figcaption strong {
   .figure-pair { grid-template-columns: 1fr; }
 }
 
+/* Aspect-balanced pair: when a wide (landscape) figure is paired with a
+   near-square one, equal columns make the wide one render tiny. Sizing the
+   columns ~proportional to the two aspect ratios renders both at the same
+   height. The shared caption still spans the full width. */
+.figure-pair.is-wideleft { grid-template-columns: 2.6fr 1fr; align-items: end; }
+.figure-pair.is-wideleft > figcaption { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+  .figure-pair.is-wideleft { grid-template-columns: 1fr; }
+}
+
 /* --- Interactive network graph (overview + findings) -------------------- */
 .net-shell { position: relative; width: 100%; height: 540px; border: 1px solid var(--rule); background: var(--paper); overflow: hidden; }
 #net-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
